@@ -1,4 +1,4 @@
-from .base import BaseExtractor
+from datatrove.pipeline.extractors.base import BaseExtractor
 
 
 class Trafilatura(BaseExtractor):
@@ -53,3 +53,7 @@ class Trafilatura(BaseExtractor):
             deduplicate=self.deduplicate,
             **self.kwargs,
         )
+
+
+if __name__ == "__main__":
+    f = Trafilatura(favour_precision=True)
