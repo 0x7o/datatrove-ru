@@ -67,7 +67,7 @@ def run():
         logging_dir=f"./logs/base_processing/{DUMP_TO_PROCESS}",
         randomize_start_duration=180,  # don't hit the bucket all at once with the list requests
     )
-    main_processing_executor.run()
+    print(main_processing_executor.run())
 
 
 if __name__ == "__main__":
