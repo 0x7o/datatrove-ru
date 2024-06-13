@@ -30,9 +30,10 @@ def run():
     main_processing_executor = LocalPipelineExecutor(
         pipeline=[
             WarcReader(
-                f"https://data.commoncrawl.org/crawl-data/{DUMP_TO_PROCESS}/segments/",
-                glob_pattern="*/warc/*",  # we want the warc files
-                default_metadata={"dump": DUMP_TO_PROCESS},
+                # f"s3://commoncrawl/crawl-data/{DUMP_TO_PROCESS}/segments/",
+                "cc",
+                compression="gzip",
+                glob_pattern="*.warc.gz",
             ),
             URLFilter(exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/1_url/{DUMP_TO_PROCESS}")),
             Trafilatura(favour_precision=True),
@@ -64,6 +65,7 @@ def run():
             JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{DUMP_TO_PROCESS}"),
         ],
         tasks=4,
+        workers=16,
         logging_dir=f"./logs/base_processing/{DUMP_TO_PROCESS}",
         randomize_start_duration=180,  # don't hit the bucket all at once with the list requests
     )
