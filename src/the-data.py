@@ -64,8 +64,8 @@ def run():
             ),
             JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{DUMP_TO_PROCESS}"),
         ],
-        tasks=64,
-        workers=4,
+        tasks=8,
+        workers=128,
         logging_dir=f"./logs/base_processing/{DUMP_TO_PROCESS}",
         randomize_start_duration=180,  # don't hit the bucket all at once with the list requests
     )
