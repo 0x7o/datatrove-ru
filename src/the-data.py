@@ -1,6 +1,6 @@
 from datatrove.utils.typeshelper import Languages
 
-from datatrove.executor.slurm import SlurmPipelineExecutor
+from datatrove.executor.local import LocalPipelineExecutor
 from datatrove.pipeline.dedup import MinhashDedupCluster, MinhashDedupFilter, MinhashDedupSignature
 from datatrove.pipeline.dedup.minhash import MinhashConfig, MinhashDedupBuckets
 from datatrove.pipeline.extractors import Trafilatura
@@ -25,8 +25,7 @@ DUMP_TO_PROCESS = "CC-MAIN-2023-50"  # example
 MAIN_OUTPUT_PATH = "gs://ae-the-data"
 FILTERING_OUTPUT_PATH = f"{MAIN_OUTPUT_PATH}/base_processing"
 
-main_processing_executor = SlurmPipelineExecutor(
-    job_name=f"cc_{DUMP_TO_PROCESS}",
+main_processing_executor = LocalPipelineExecutor(
     pipeline=[
         WarcReader(
             f"s3://commoncrawl/crawl-data/{DUMP_TO_PROCESS}/segments/",
@@ -63,12 +62,8 @@ main_processing_executor = SlurmPipelineExecutor(
         JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{DUMP_TO_PROCESS}"),
     ],
     tasks=8000,
-    time="10:00:00",
     logging_dir=f"{MAIN_OUTPUT_PATH}/logs/base_processing/{DUMP_TO_PROCESS}",
-    slurm_logs_folder=f"logs/base_processing/{DUMP_TO_PROCESS}/slurm_logs",  # must be local
     randomize_start_duration=180,  # don't hit the bucket all at once with the list requests
-    mem_per_cpu_gb=2,
-    partition="hopper-cpu",
 )
 main_processing_executor.run()
 
@@ -96,8 +91,7 @@ INPUT_READER = JsonlReader(
 )  # this is the output from the first part
 
 # stage 1 computes minhash signatures for each task (each task gets a set of files)
-stage1 = SlurmPipelineExecutor(
-    job_name=f"mh1_{DUMP_TO_PROCESS}",
+stage1 = LocalPipelineExecutor(
     pipeline=[
         INPUT_READER,
         MinhashDedupSignature(
@@ -105,16 +99,12 @@ stage1 = SlurmPipelineExecutor(
         ),
     ],
     tasks=TOTAL_TASKS,
-    time="5:00:00",
-    partition="hopper-cpu",
     logging_dir=f"{S3_LOGS_FOLDER}/signatures",
-    slurm_logs_folder=f"{LOCAL_LOGS_FOLDER}/signatures/slurm_logs",
     randomize_start_duration=180,
     depends=main_processing_executor,  # only start after the first one completes
 )
 
-stage2 = SlurmPipelineExecutor(
-    job_name=f"mh2_{DUMP_TO_PROCESS}",
+stage2 = LocalPipelineExecutor(
     pipeline=[
         MinhashDedupBuckets(
             input_folder=f"{S3_MINHASH_BASE_PATH}/{DUMP_TO_PROCESS}/signatures",
@@ -125,15 +115,10 @@ stage2 = SlurmPipelineExecutor(
     # workers per bucket
     randomize_start_duration=180,
     logging_dir=f"{S3_LOGS_FOLDER}/buckets",
-    partition="hopper-cpu",
-    time="02:00:00",
-    mem_per_cpu_gb=4,
-    cpus_per_task=3,  # you can add run more (smaller) tasks if you do not have a lot of memory
     depends=stage1,
 )
 
-stage3 = SlurmPipelineExecutor(
-    job_name=f"mh3_{DUMP_TO_PROCESS}",
+stage3 = LocalPipelineExecutor(
     pipeline=[
         MinhashDedupCluster(
             input_folder=f"{S3_MINHASH_BASE_PATH}/{DUMP_TO_PROCESS}/buckets",
@@ -143,15 +128,10 @@ stage3 = SlurmPipelineExecutor(
     ],
     tasks=1,  # this step runs on a single task
     logging_dir=f"{S3_LOGS_FOLDER}/clustering",
-    partition="hopper-cpu",
-    time="30:00:00",  # and can also be quite slow. Usually not this slow though
-    mem_per_cpu_gb=25,
-    cpus_per_task=8,  # if you dedup a full dump, you do need a lot of memory for this one
     depends=stage2,
 )
 
-stage4 = SlurmPipelineExecutor(
-    job_name=f"mh4_{DUMP_TO_PROCESS}",
+stage4 = LocalPipelineExecutor(
     pipeline=[
         INPUT_READER,
         TokensCounter(tokenizer_name_or_path="aeonium/Aeonium-v1.1-Base-4B"),
@@ -163,9 +143,6 @@ stage4 = SlurmPipelineExecutor(
     ],
     tasks=TOTAL_TASKS,
     logging_dir=f"{S3_LOGS_FOLDER}/filtering",
-    partition="hopper-cpu",
-    time="5:00:00",
-    mem_per_cpu_gb=4,
     depends=stage3,
 )
 
