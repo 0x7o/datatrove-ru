@@ -22,7 +22,7 @@ from datatrove.pipeline.writers.jsonl import JsonlWriter
 """
 DUMP_TO_PROCESS = "CC-MAIN-2023-50"  # example
 
-MAIN_OUTPUT_PATH = "gs://ae-the-data/"
+MAIN_OUTPUT_PATH = "gs://ae-the-data"
 FILTERING_OUTPUT_PATH = f"{MAIN_OUTPUT_PATH}/base_processing"
 
 main_processing_executor = SlurmPipelineExecutor(
