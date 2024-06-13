@@ -9,6 +9,7 @@ from datatrove.pipeline.filters import (
     FineWebQualityFilter,
     GopherQualityFilter,
     GopherRepetitionFilter,
+    SafetyFilter,
     LanguageFilter,
     URLFilter,
 )
@@ -61,6 +62,10 @@ def run():
             FineWebQualityFilter(
                 exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/6_fineweb_qual/{DUMP_TO_PROCESS}"),
                 language=Languages.russian
+            ),
+            SafetyFilter(
+                exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/7_safety_filter/{DUMP_TO_PROCESS}"),
+                model_name_or_path="0x7o/rubert-tiny-sensitive-topics"
             ),
             JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{DUMP_TO_PROCESS}"),
         ],
