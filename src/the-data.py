@@ -40,7 +40,7 @@ def run():
             LanguageFilter(
                 languages=(Languages.russian,),
                 exclusion_writer=JsonlWriter(
-                    f"{FILTERING_OUTPUT_PATH}/2_non_russian",
+                    f"{FILTERING_OUTPUT_PATH}/removed/2_non_russian",
                     output_filename="${language}/" + DUMP_TO_PROCESS + "/${rank}.jsonl.gz",
                     # folder structure: language/dump/file
                 )
