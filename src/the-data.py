@@ -30,7 +30,7 @@ def run():
     main_processing_executor = LocalPipelineExecutor(
         pipeline=[
             WarcReader(
-                f"https://commoncrawl/crawl-data/{DUMP_TO_PROCESS}/segments/",
+                f"https://data.commoncrawl.org/crawl-data/{DUMP_TO_PROCESS}/segments/",
                 glob_pattern="*/warc/*",  # we want the warc files
                 default_metadata={"dump": DUMP_TO_PROCESS},
             ),
