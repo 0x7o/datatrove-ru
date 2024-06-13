@@ -25,47 +25,53 @@ DUMP_TO_PROCESS = "CC-MAIN-2023-50"  # example
 MAIN_OUTPUT_PATH = "gs://ae-the-data"
 FILTERING_OUTPUT_PATH = f"{MAIN_OUTPUT_PATH}/base_processing"
 
-main_processing_executor = LocalPipelineExecutor(
-    pipeline=[
-        WarcReader(
-            f"s3://commoncrawl/crawl-data/{DUMP_TO_PROCESS}/segments/",
-            glob_pattern="*/warc/*",  # we want the warc files
-            default_metadata={"dump": DUMP_TO_PROCESS},
-        ),
-        URLFilter(exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/1_url/{DUMP_TO_PROCESS}")),
-        Trafilatura(favour_precision=True),
-        LanguageFilter(
-            languages=(Languages.russian,),
-            exclusion_writer=JsonlWriter(
-                f"{FILTERING_OUTPUT_PATH}/2_non_russian/",
-                output_filename="${language}/" + DUMP_TO_PROCESS + "/${rank}.jsonl.gz",
-                # folder structure: language/dump/file
-            )
-        ),
-        GopherRepetitionFilter(
-            exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/3_gopher_rep/{DUMP_TO_PROCESS}"),
-            language=Languages.russian
-        ),
-        GopherQualityFilter(
-            exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/4_gopher_qual/{DUMP_TO_PROCESS}"),
-            language=Languages.russian
-        ),
-        C4QualityFilter(
-            filter_no_terminal_punct=False,
-            exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/5_c4/{DUMP_TO_PROCESS}"),
-            language=Languages.russian
-        ),
-        FineWebQualityFilter(
-            exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/6_fineweb_qual/{DUMP_TO_PROCESS}"),
-            language=Languages.russian
-        ),
-        JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{DUMP_TO_PROCESS}"),
-    ],
-    tasks=8000,
-    logging_dir=f"{MAIN_OUTPUT_PATH}/logs/base_processing/{DUMP_TO_PROCESS}",
-    randomize_start_duration=180,  # don't hit the bucket all at once with the list requests
-)
-main_processing_executor.run()
+
+def run():
+    main_processing_executor = LocalPipelineExecutor(
+        pipeline=[
+            WarcReader(
+                f"s3://commoncrawl/crawl-data/{DUMP_TO_PROCESS}/segments/",
+                glob_pattern="*/warc/*",  # we want the warc files
+                default_metadata={"dump": DUMP_TO_PROCESS},
+            ),
+            URLFilter(exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/1_url/{DUMP_TO_PROCESS}")),
+            Trafilatura(favour_precision=True),
+            LanguageFilter(
+                languages=(Languages.russian,),
+                exclusion_writer=JsonlWriter(
+                    f"{FILTERING_OUTPUT_PATH}/2_non_russian/",
+                    output_filename="${language}/" + DUMP_TO_PROCESS + "/${rank}.jsonl.gz",
+                    # folder structure: language/dump/file
+                )
+            ),
+            GopherRepetitionFilter(
+                exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/3_gopher_rep/{DUMP_TO_PROCESS}"),
+                language=Languages.russian
+            ),
+            GopherQualityFilter(
+                exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/4_gopher_qual/{DUMP_TO_PROCESS}"),
+                language=Languages.russian
+            ),
+            C4QualityFilter(
+                filter_no_terminal_punct=False,
+                exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/5_c4/{DUMP_TO_PROCESS}"),
+                language=Languages.russian
+            ),
+            FineWebQualityFilter(
+                exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/6_fineweb_qual/{DUMP_TO_PROCESS}"),
+                language=Languages.russian
+            ),
+            JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{DUMP_TO_PROCESS}"),
+        ],
+        tasks=8000,
+        logging_dir=f"./logs/base_processing/{DUMP_TO_PROCESS}",
+        randomize_start_duration=180,  # don't hit the bucket all at once with the list requests
+    )
+    main_processing_executor.run()
+
+
+if __name__ == "__main__":
+    run()
 #
 # """
 #     we then applied minhash deduplication to each individual dump,
