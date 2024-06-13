@@ -3,7 +3,7 @@ from datatrove.utils.typeshelper import Languages
 from datatrove.executor.local import LocalPipelineExecutor
 from datatrove.pipeline.dedup import MinhashDedupCluster, MinhashDedupFilter, MinhashDedupSignature
 from datatrove.pipeline.dedup.minhash import MinhashConfig, MinhashDedupBuckets
-from datatrove.pipeline.extractors import Trafilatura
+from datatrove.pipeline.extractors import Trafilatura, ReadabilityInscriptis
 from datatrove.pipeline.filters import (
     C4QualityFilter,
     FineWebQualityFilter,
@@ -36,7 +36,7 @@ def run():
                 glob_pattern="*.warc.gz",
             ),
             URLFilter(exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/1_url/{DUMP_TO_PROCESS}")),
-            Trafilatura(favour_precision=True),
+            ReadabilityInscriptis(),
             LanguageFilter(
                 languages=(Languages.russian,),
                 exclusion_writer=JsonlWriter(
