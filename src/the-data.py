@@ -36,7 +36,7 @@ def run():
                 glob_pattern="*.warc.gz",
             ),
             URLFilter(exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/1_url/{DUMP_TO_PROCESS}")),
-            Trafilatura(favour_precision=True),
+            Trafilatura(timeout=10),
             LanguageFilter(
                 languages=(Languages.russian,),
                 exclusion_writer=JsonlWriter(
