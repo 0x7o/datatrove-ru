@@ -27,6 +27,7 @@ from datatrove.pipeline.writers.jsonl import JsonlWriter
 from argparse import ArgumentParser
 import requests
 import gzip
+import nltk
 
 """
     we first ran the following pipeline for each dump
@@ -140,7 +141,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
     S3_LOGS_FOLDER = "./logs/minhash"
     LOCAL_LOGS_FOLDER = "./logs/minhash"
 
-    TOTAL_TASKS = 1000
+    TOTAL_TASKS = 64
 
     # this is the original data that we want to deduplicate
     INPUT_READER = JsonlReader(
@@ -221,6 +222,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
 
 
 if __name__ == "__main__":
+    nltk.download('punkt')
     parser = ArgumentParser()
     parser.add_argument("--dump", type=str, required=True)
     parser.add_argument("--output", type=str, required=True)
