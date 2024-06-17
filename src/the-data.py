@@ -57,6 +57,8 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
             with open(f"cc/{w.split('/')[-1]}", "wb") as f:
                 f.write(r.content)
             files_downloaded += 1
+        if files_downloaded >= n:
+            break
 
     main_processing_executor = LocalPipelineExecutor(
         pipeline=[
