@@ -9,10 +9,16 @@ from datatrove.utils.logging import logger
 from datatrove.utils.stats import PipelineStats
 
 
-parser = argparse.ArgumentParser("Combine and average per task statistics into a single file.")
+parser = argparse.ArgumentParser(
+    "Combine and average per task statistics into a single file."
+)
 
 parser.add_argument(
-    "path", type=str, nargs="?", help="Path to the stats folder. Defaults to current directory.", default=os.getcwd()
+    "path",
+    type=str,
+    nargs="?",
+    help="Path to the stats folder. Defaults to current directory.",
+    default=os.getcwd(),
 )
 parser.add_argument(
     "--output",

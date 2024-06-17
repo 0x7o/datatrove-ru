@@ -12,7 +12,11 @@ import moto
 from datatrove.io import get_datafolder, safely_create_file
 
 
-EXAMPLE_DIRS = ("/home/testuser/somedir", "file:///home/testuser2/somedir", "s3://test-bucket/somedir")
+EXAMPLE_DIRS = (
+    "/home/testuser/somedir",
+    "file:///home/testuser2/somedir",
+    "s3://test-bucket/somedir",
+)
 FULL_PATHS = (
     "/home/testuser/somedir/file.txt",
     "/home/testuser2/somedir/file.txt",
@@ -67,7 +71,10 @@ class TestIO(unittest.TestCase):
                     open(file_path + ".lock", "a").close()
 
                 pool.starmap(
-                    partial(safely_create_file, do_processing=partial(fake_do_download, cc=counter, ll=lock)),
+                    partial(
+                        safely_create_file,
+                        do_processing=partial(fake_do_download, cc=counter, ll=lock),
+                    ),
                     [(file_path,) for _ in range(2)],
                 )
 

@@ -35,7 +35,9 @@ class HuggingFaceDatasetWriter(ParquetWriter):
         adapter: Callable = None,
         cleanup: bool = True,
         expand_metadata: bool = True,
-        max_file_size: int = round(4.5 * 2**30),  # 4.5GB, leave some room for the last batch
+        max_file_size: int = round(
+            4.5 * 2**30
+        ),  # 4.5GB, leave some room for the last batch
     ):
         """
         This class is intended to upload VERY LARGE datasets. Consider using `push_to_hub` or just using a
@@ -79,10 +81,15 @@ class HuggingFaceDatasetWriter(ParquetWriter):
 
     def upload_files(self, *filenames):
         if not self._repo_init:
-            create_repo(self.dataset, private=self.private, repo_type="dataset", exist_ok=True)
+            create_repo(
+                self.dataset, private=self.private, repo_type="dataset", exist_ok=True
+            )
             self._repo_init = True
         additions = [
-            CommitOperationAdd(path_in_repo=filename, path_or_fileobj=self.local_working_dir.resolve_paths(filename))
+            CommitOperationAdd(
+                path_in_repo=filename,
+                path_or_fileobj=self.local_working_dir.resolve_paths(filename),
+            )
             for filename in filenames
         ]
         logger.info(f"Uploading {','.join(filenames)} to the hub...")
@@ -112,7 +119,9 @@ class HuggingFaceDatasetWriter(ParquetWriter):
             except HfHubHTTPError as e:
                 if "A commit has happened since" in e.server_message:
                     if retries >= MAX_RETRIES:
-                        logger.error(f"Failed to create commit after {MAX_RETRIES=}. Giving up.")
+                        logger.error(
+                            f"Failed to create commit after {MAX_RETRIES=}. Giving up."
+                        )
                         raise e
                     logger.info("Commit creation race condition issue. Waiting...")
                     time.sleep(BASE_DELAY * 2**retries + random.uniform(0, 2))

@@ -79,7 +79,11 @@ class IpcReader(BaseDiskReader):
                     yield batch
 
     def read_file(self, filepath: str):
-        batch_iter = self._iter_file_batches(filepath) if not self.stream else self._iter_stream_batches(filepath)
+        batch_iter = (
+            self._iter_file_batches(filepath)
+            if not self.stream
+            else self._iter_stream_batches(filepath)
+        )
         li = 0
         for batch in batch_iter:
             documents = []

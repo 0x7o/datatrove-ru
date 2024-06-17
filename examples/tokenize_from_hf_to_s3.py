@@ -8,12 +8,20 @@ from datatrove.pipeline.tokens.tokenizer import DocumentTokenizer
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("dataset", type=str, help="huggingface dataset name. Example: stas/openwebtext-10k")
 parser.add_argument(
-    "output_path", type=str, help="Where to save individual tokenization files and the final merged " "files."
+    "dataset", type=str, help="huggingface dataset name. Example: stas/openwebtext-10k"
 )
-parser.add_argument("-l", "--logs", type=str, help="path to logs folder", default="tokenization_logs")
-parser.add_argument("-t", "--tokenizer", type=str, help="tokenizer to use", default="gpt2")
+parser.add_argument(
+    "output_path",
+    type=str,
+    help="Where to save individual tokenization files and the final merged " "files.",
+)
+parser.add_argument(
+    "-l", "--logs", type=str, help="path to logs folder", default="tokenization_logs"
+)
+parser.add_argument(
+    "-t", "--tokenizer", type=str, help="tokenizer to use", default="gpt2"
+)
 parser.add_argument(
     "--local",
     type=str,
@@ -25,21 +33,35 @@ parser.add_argument(
     "-o",
     "--output_name",
     type=str,
-    help="filename for the final output files. By default this will " "be `dataset-tokenizer`",
+    help="filename for the final output files. By default this will "
+    "be `dataset-tokenizer`",
     default=None,
 )
-parser.add_argument("-s", "--split", type=str, help="dataset split. `train` by default", default="train")
+parser.add_argument(
+    "-s", "--split", type=str, help="dataset split. `train` by default", default="train"
+)
 parser.add_argument(
     "-tk",
     "--text_key",
     type=str,
-    help="Column that actually contains the text to be " "tokenized. `text` by default.",
+    help="Column that actually contains the text to be "
+    "tokenized. `text` by default.",
     default="text",
 )
 parser.add_argument(
-    "-p", "--partition", type=str, help="Slurm partition to use. `hopper-prod` by default.", default="hopper-prod"
+    "-p",
+    "--partition",
+    type=str,
+    help="Slurm partition to use. `hopper-prod` by default.",
+    default="hopper-prod",
 )
-parser.add_argument("-ts", "--tasks", type=int, help="Number of tasks to run. 1000 by default", default=1000)
+parser.add_argument(
+    "-ts",
+    "--tasks",
+    type=int,
+    help="Number of tasks to run. 1000 by default",
+    default=1000,
+)
 
 # this pipeline will pull the openwebtext dataset from the HF hub, locally tokenize it in parallel
 # and then merge-shuffle everything into a final tokenized binary file
@@ -51,8 +73,12 @@ if not DATASET_NAME:
     DATASET_NAME = f"{args.dataset}-{args.tokenizer}".replace("/", "_")
 
 LOGS_FOLDER = args.logs
-WORKING_DIR = os.path.join(args.output_path, "tokenized-tasks")  # where to save the tokenized individual files
-LOCAL_WORKING_DIR = args.local  # if your WORKING_DIR is a local path, you won't need this one
+WORKING_DIR = os.path.join(
+    args.output_path, "tokenized-tasks"
+)  # where to save the tokenized individual files
+LOCAL_WORKING_DIR = (
+    args.local
+)  # if your WORKING_DIR is a local path, you won't need this one
 # and can set it to `None`
 if LOCAL_WORKING_DIR:
     LOCAL_WORKING_DIR = os.path.join(LOCAL_WORKING_DIR, DATASET_NAME)

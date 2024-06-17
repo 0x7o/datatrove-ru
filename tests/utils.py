@@ -7,7 +7,8 @@ from datatrove.utils.hashing import HashConfig
 
 
 def use_hash_configs(
-    precision: list[int] = list(get_args(get_type_hints(HashConfig)["precision"])), hash_fc: list[str] = ["xxhash"]
+    precision: list[int] = list(get_args(get_type_hints(HashConfig)["precision"])),
+    hash_fc: list[str] = ["xxhash"],
 ):
     """
     Decorator which runs the wrapped test function, with hash config of all combinations of given precision and hash_fc

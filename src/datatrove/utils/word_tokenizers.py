@@ -89,12 +89,18 @@ class SpaCyTokenizer(WordTokenizer):
 
     def word_tokenize(self, text: str) -> list[str]:
         self.tokenizer.max_length = len(text) + 10
-        tokens = [token.text for token in self.tokenizer(text, disable=["parser", "tagger", "ner"])]
+        tokens = [
+            token.text
+            for token in self.tokenizer(text, disable=["parser", "tagger", "ner"])
+        ]
         return strip_strings(tokens)
 
     def sent_tokenize(self, text: str) -> list[str]:
         self.tokenizer.max_length = len(text) + 10
-        sents = [sent.text for sent in self.tokenizer(text, disable=["parser", "tagger", "ner"]).sents]
+        sents = [
+            sent.text
+            for sent in self.tokenizer(text, disable=["parser", "tagger", "ner"]).sents
+        ]
         return strip_strings(sents)
 
     def span_tokenize(self, text: str) -> list[tuple[int, int]]:
@@ -139,7 +145,10 @@ class StanzaTokenizer(WordTokenizer):
 
     def span_tokenize(self, text: str) -> list[tuple[int, int]]:
         doc = self.tokenizer(text)
-        return [(sent.tokens[0].start_char, sent.tokens[-1].end_char) for sent in doc.sentences]
+        return [
+            (sent.tokens[0].start_char, sent.tokens[-1].end_char)
+            for sent in doc.sentences
+        ]
 
 
 class ThaiTokenizer(WordTokenizer):
@@ -168,10 +177,14 @@ class IndicNLPTokenizer(WordTokenizer):
     def __init__(self, language: str):
         super().__init__()
         self.language = language
-        check_required_dependencies(f"{language} word tokenizer", [("indicnlp", "indic-nlp-library")])
+        check_required_dependencies(
+            f"{language} word tokenizer", [("indicnlp", "indic-nlp-library")]
+        )
 
     def word_tokenize(self, text) -> list[str]:
-        from indicnlp.tokenize.indic_tokenize import trivial_tokenize as indicnlp_trivial_tokenize
+        from indicnlp.tokenize.indic_tokenize import (
+            trivial_tokenize as indicnlp_trivial_tokenize,
+        )
 
         tokens = indicnlp_trivial_tokenize(text, self.language)
         return strip_strings(tokens)
@@ -211,7 +224,9 @@ class KiwiTokenizer(WordTokenizer):
         return strip_strings(sents)
 
     def span_tokenize(self, text: str) -> list[tuple[int, int]]:
-        return [(sent.start, sent.end) for sent in self.tokenizer.split_into_sents(text)]
+        return [
+            (sent.start, sent.end) for sent in self.tokenizer.split_into_sents(text)
+        ]
 
 
 # If you know a better tokenizer or better proxy language, please submit a PR
@@ -236,7 +251,9 @@ WORD_TOKENIZER_FACTORY: dict[str, Callable[[], WordTokenizer]] = {
     Languages.spanish: lambda: NLTKTokenizer("spanish"),
     Languages.swedish: lambda: NLTKTokenizer("swedish"),
     Languages.turkish: lambda: NLTKTokenizer("turkish"),
-    Languages.chinese: lambda: SpaCyTokenizer("zh", {"nlp": {"tokenizer": {"segmenter": "jieba"}}}),
+    Languages.chinese: lambda: SpaCyTokenizer(
+        "zh", {"nlp": {"tokenizer": {"segmenter": "jieba"}}}
+    ),
     Languages.japanese: lambda: StanzaTokenizer("ja"),
     Languages.vietnamese: lambda: SpaCyTokenizer("vi"),
     Languages.indonesian: lambda: SpaCyTokenizer("id"),

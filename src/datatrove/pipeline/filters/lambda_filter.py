@@ -8,7 +8,11 @@ from datatrove.pipeline.writers.disk_base import DiskWriter
 class LambdaFilter(BaseFilter):
     name = "👤 Lambda"
 
-    def __init__(self, filter_function: Callable[[Document], bool], exclusion_writer: DiskWriter = None):
+    def __init__(
+        self,
+        filter_function: Callable[[Document], bool],
+        exclusion_writer: DiskWriter = None,
+    ):
         """
         filters documents triggering the given filter_function with respect to a specific metadata key.
 

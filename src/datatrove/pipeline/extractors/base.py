@@ -34,7 +34,9 @@ class BaseExtractor(PipelineStep):
         """
         pass
 
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """Iterates through each document in data and calls `timeout_extract` on it.
 
         Args:
@@ -53,10 +55,14 @@ class BaseExtractor(PipelineStep):
                     try:
                         doc.text = future.result(timeout=self.timeout)
                     except TimeoutError:
-                        logger.warning("⏰ Timeout while cleaning record text. Skipping record.")
+                        logger.warning(
+                            "⏰ Timeout while cleaning record text. Skipping record."
+                        )
                         continue
                     except Exception as e:
-                        logger.warning(f'❌ Error "{e}" while cleaning record text. Skipping record.')
+                        logger.warning(
+                            f'❌ Error "{e}" while cleaning record text. Skipping record.'
+                        )
                         continue
                 if doc.text:
                     self.stat_update(StatHints.forwarded)

@@ -91,16 +91,22 @@ class SingleBloomFilter(PipelineStep):
         self.save_bloom_filter = save_bloom_filter
         self.exclusion_writer = exclusion_writer
         # TODO: Add support for 64-bit
-        assert self.config.hash_config.precision == 32, "Bloom filter only supports 32-bit hashes"
+        assert (
+            self.config.hash_config.precision == 32
+        ), "Bloom filter only supports 32-bit hashes"
         self.hash_fc = create_hash_func(self.config.hash_config)
         assert self.config.m < MAX_HASH
 
         self.total_shingles = 0
         self._parameters = None
 
-        assert self.config.m_bytes < MAX_HASH, f"{MAX_HASH=} is smaller than {self.config.m_bytes=}"
+        assert (
+            self.config.m_bytes < MAX_HASH
+        ), f"{MAX_HASH=} is smaller than {self.config.m_bytes=}"
         if self.config.expected_elements:
-            fp = get_false_positive_prob(self.config.m_bytes, n=self.config.expected_elements, k=self.config.k)
+            fp = get_false_positive_prob(
+                self.config.m_bytes, n=self.config.expected_elements, k=self.config.k
+            )
             if fp > 0.05:
                 logger.warning(f"False probability = {fp:.3}")
             else:
@@ -122,8 +128,12 @@ class SingleBloomFilter(PipelineStep):
         if not self._parameters:
             gen = np.random.RandomState(self.config.seed)
             self._parameters = (
-                gen.randint(1, _mersenne_prime, dtype=np.uint64, size=(1, self.config.k)),
-                gen.randint(0, _mersenne_prime, dtype=np.uint64, size=(1, self.config.k)),
+                gen.randint(
+                    1, _mersenne_prime, dtype=np.uint64, size=(1, self.config.k)
+                ),
+                gen.randint(
+                    0, _mersenne_prime, dtype=np.uint64, size=(1, self.config.k)
+                ),
             )
         return self._parameters
 
@@ -135,7 +145,10 @@ class SingleBloomFilter(PipelineStep):
             [
                 self.hash_fc(" ".join(x))
                 for x in ngrams(
-                    self.tokenizer.word_tokenize(simplify_text(text, self.config.norm_config)), self.config.n_grams
+                    self.tokenizer.word_tokenize(
+                        simplify_text(text, self.config.norm_config)
+                    ),
+                    self.config.n_grams,
                 )
             ],
             dtype=np.uint64,
@@ -207,4 +220,6 @@ class SingleBloomFilter(PipelineStep):
         logger.info(
             f"False probability = {get_false_positive_prob(self.config.m_bytes, n=self.total_shingles, k=self.config.k):.3}"
         )
-        logger.info(f"Optimal K given total shingles = {get_optimal_k(self.config.m_bytes, self.total_shingles)}")
+        logger.info(
+            f"Optimal K given total shingles = {get_optimal_k(self.config.m_bytes, self.total_shingles)}"
+        )

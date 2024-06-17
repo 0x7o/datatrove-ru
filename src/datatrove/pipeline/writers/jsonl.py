@@ -25,7 +25,12 @@ class JsonlWriter(DiskWriter):
         compression: str | None = "gzip",
         adapter: Callable = None,
     ):
-        super().__init__(output_folder, output_filename=output_filename, compression=compression, adapter=adapter)
+        super().__init__(
+            output_folder,
+            output_filename=output_filename,
+            compression=compression,
+            adapter=adapter,
+        )
 
     def _write(self, document: dict, file_handler: IO, _filename: str):
         file_handler.write(json.dumps(document, ensure_ascii=False) + "\n")

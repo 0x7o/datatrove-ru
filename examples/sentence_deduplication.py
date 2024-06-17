@@ -1,6 +1,10 @@
 from datatrove.executor.base import PipelineExecutor
 from datatrove.executor.local import LocalPipelineExecutor
-from datatrove.pipeline.dedup import SentenceDedupFilter, SentenceDedupSignature, SentenceFindDedups
+from datatrove.pipeline.dedup import (
+    SentenceDedupFilter,
+    SentenceDedupSignature,
+    SentenceFindDedups,
+)
 from datatrove.pipeline.dedup.sentence_dedup import SentDedupConfig
 from datatrove.pipeline.extractors import Trafilatura
 from datatrove.pipeline.filters import GopherQualityFilter, LanguageFilter
@@ -43,21 +47,35 @@ def run_example():
         GopherQualityFilter(min_stop_words=0),
         LanguageFilter(language_threshold=0.5, languages=(Languages.english,)),
         JsonlWriter("intermediate/"),
-        SentenceDedupSignature(output_folder="c4/sigs", config=sent_dedup_config, finder_workers=FINDER_WORKERS),
+        SentenceDedupSignature(
+            output_folder="c4/sigs",
+            config=sent_dedup_config,
+            finder_workers=FINDER_WORKERS,
+        ),
     ]
 
-    pipeline_2 = [SentenceFindDedups(data_folder="c4/sigs", output_folder="c4/dups", config=sent_dedup_config)]
+    pipeline_2 = [
+        SentenceFindDedups(
+            data_folder="c4/sigs", output_folder="c4/dups", config=sent_dedup_config
+        )
+    ]
 
     pipeline_3 = [
         JsonlReader(data_folder="intermediate/"),
         SentenceDedupFilter(data_folder="c4/dups", config=sent_dedup_config),
     ]
 
-    executor_1: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_1, workers=4, tasks=4)
+    executor_1: PipelineExecutor = LocalPipelineExecutor(
+        pipeline=pipeline_1, workers=4, tasks=4
+    )
 
-    executor_2: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_2, workers=1, tasks=FINDER_WORKERS)
+    executor_2: PipelineExecutor = LocalPipelineExecutor(
+        pipeline=pipeline_2, workers=1, tasks=FINDER_WORKERS
+    )
 
-    executor_3: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_3, workers=4, tasks=4)
+    executor_3: PipelineExecutor = LocalPipelineExecutor(
+        pipeline=pipeline_3, workers=4, tasks=4
+    )
 
     print(executor_1.run())
     print(executor_2.run())

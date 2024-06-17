@@ -23,12 +23,24 @@ class TestIpcReader(unittest.TestCase):
 
         # Create a dummy ipc/feather file
         self.ipc_file = os.path.join(self.tmp_dir, "data.feather")
-        pa_table = pa.table({"text": ["good", "bad", "equisite"], "id": [2, 3, 4], "text_length": [4, 3, 8]})
+        pa_table = pa.table(
+            {
+                "text": ["good", "bad", "equisite"],
+                "id": [2, 3, 4],
+                "text_length": [4, 3, 8],
+            }
+        )
         feather.write_feather(pa_table, self.ipc_file)
 
         # Create a dummy ipc stream file
         self.ipc_stream_file = os.path.join(self.tmp_dir, "data.arrow")
-        pa_table = pa.table({"text": ["good", "bad", "equisite"], "id": [2, 3, 4], "text_length": [4, 3, 8]})
+        pa_table = pa.table(
+            {
+                "text": ["good", "bad", "equisite"],
+                "id": [2, 3, 4],
+                "text_length": [4, 3, 8],
+            }
+        )
         with pa.ipc.new_stream(self.ipc_stream_file, pa_table.schema) as writer:
             writer.write_table(pa_table)
 

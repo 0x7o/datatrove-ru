@@ -76,10 +76,17 @@ class DocumentTokenizerMerger(PipelineStep):
         Returns:
 
         """
-        doc_ids = np.concatenate([np.ones(len(doc_ends), dtype=int) * i for i, doc_ends in enumerate(all_doc_ends)])
+        doc_ids = np.concatenate(
+            [
+                np.ones(len(doc_ends), dtype=int) * i
+                for i, doc_ends in enumerate(all_doc_ends)
+            ]
+        )
         return doc_ids if not self.shuffle else self.rand.permutation(doc_ids)
 
-    def run(self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """Main method to run the merging of files.
             The world_size must be 1 for this pipeline step merging the results of the previous parallel step.
 
@@ -111,15 +118,31 @@ class DocumentTokenizerMerger(PipelineStep):
                 with self.input_folder.open(f"{datafiles[0]}.metadata", "rt") as f:
                     tokenizer_name_or_path = f.read().splitlines()[0]
                     if "|" in tokenizer_name_or_path:
-                        tokenizer_name_or_path, token_size = tokenizer_name_or_path.split("|")
+                        (
+                            tokenizer_name_or_path,
+                            token_size,
+                        ) = tokenizer_name_or_path.split("|")
                         token_size = int(token_size)
 
-        doc_ends = [load_doc_ends(self.input_folder.open(file, "rb")) for file in datafiles_index]
+        doc_ends = [
+            load_doc_ends(self.input_folder.open(file, "rb"))
+            for file in datafiles_index
+        ]
         token_inputs = list(
-            map(partial(get_data_reader, nb_bytes=token_size), self.input_folder.open_files(datafiles), doc_ends)
+            map(
+                partial(get_data_reader, nb_bytes=token_size),
+                self.input_folder.open_files(datafiles),
+                doc_ends,
+            )
         )
         loss_inputs = (
-            list(map(partial(get_data_reader, nb_bytes=1), self.input_folder.open_files(datafiles_loss), doc_ends))
+            list(
+                map(
+                    partial(get_data_reader, nb_bytes=1),
+                    self.input_folder.open_files(datafiles_loss),
+                    doc_ends,
+                )
+            )
             if self.save_loss_metadata
             else None
         )
@@ -137,7 +160,11 @@ class DocumentTokenizerMerger(PipelineStep):
             token_size=token_size,
         )
         for input_file_id in tqdm(
-            ordering, desc="Merging documents", unit="documents", total=len(ordering), disable=not self.progress
+            ordering,
+            desc="Merging documents",
+            unit="documents",
+            total=len(ordering),
+            disable=not self.progress,
         ):
             if 0 < self.max_tokens <= self.stats["tokens"].total:
                 break
@@ -163,7 +190,9 @@ class DocumentTokenizerMerger(PipelineStep):
         output_file.close()
         if self.save_final_metadata:
             # save final total metadata file
-            output_file.write_final_metadata(self.stats["tokens"].total, filename=f"{self.save_filename}.ds")
+            output_file.write_final_metadata(
+                self.stats["tokens"].total, filename=f"{self.save_filename}.ds"
+            )
 
 
 def load_doc_ends(file: BinaryIO) -> np.ndarray:

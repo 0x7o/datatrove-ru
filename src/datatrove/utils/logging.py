@@ -9,7 +9,11 @@ from loguru import logger
 
 def get_env_bool(name, default=None):
     env_var = os.environ.get(name, None)
-    return default if env_var is None else (env_var.lower().strip() in ("yes", "true", "t", "1"))
+    return (
+        default
+        if env_var is None
+        else (env_var.lower().strip() in ("yes", "true", "t", "1"))
+    )
 
 
 DATATROVE_COLORIZE_LOGS = get_env_bool("DATATROVE_COLORIZE_LOGS")
@@ -53,7 +57,11 @@ def add_task_logger(
     """
     logger.remove()
     logfile = logging_dir.open(f"logs/task_{rank:05d}.log", "w")
-    logger.add(sys.stderr, colorize=DATATROVE_COLORIZE_LOGS, level="INFO" if local_rank == 0 else "ERROR")
+    logger.add(
+        sys.stderr,
+        colorize=DATATROVE_COLORIZE_LOGS,
+        level="INFO" if local_rank == 0 else "ERROR",
+    )
     logger.add(logfile, colorize=DATATROVE_COLORIZE_LOG_FILES, level="DEBUG")
     logger.info(f"Launching pipeline for {rank=}")
     return logfile
@@ -86,7 +94,9 @@ def log_pipeline(pipeline):
     Returns:
 
     """
-    steps = "\n".join([pipe.__repr__() if callable(pipe) else "Iterable" for pipe in pipeline])
+    steps = "\n".join(
+        [pipe.__repr__() if callable(pipe) else "Iterable" for pipe in pipeline]
+    )
     logger.info(f"\n--- 🛠️ PIPELINE 🛠\n{steps}")
 
 

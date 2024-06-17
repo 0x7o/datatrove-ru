@@ -4,13 +4,19 @@ from functools import lru_cache
 from typing import NoReturn
 
 
-ASSETS_PATH = os.path.join(importlib.resources.files(__package__.split(".")[0]), "assets")
+ASSETS_PATH = os.path.join(
+    importlib.resources.files(__package__.split(".")[0]), "assets"
+)
 
 
-def check_required_dependencies(step_name: str, required_dependencies: list[str] | list[tuple[str, str]]):
+def check_required_dependencies(
+    step_name: str, required_dependencies: list[str] | list[tuple[str, str]]
+):
     missing_dependencies: dict[str, str] = {}
     for dependency in required_dependencies:
-        dependency = dependency if isinstance(dependency, tuple) else (dependency, dependency)
+        dependency = (
+            dependency if isinstance(dependency, tuple) else (dependency, dependency)
+        )
         package_name, pip_name = dependency
         if not _is_package_available(package_name):
             missing_dependencies[package_name] = pip_name
@@ -18,7 +24,9 @@ def check_required_dependencies(step_name: str, required_dependencies: list[str]
         _raise_error_for_missing_dependencies(step_name, missing_dependencies)
 
 
-def _raise_error_for_missing_dependencies(step_name: str, dependencies: dict[str, str]) -> NoReturn:
+def _raise_error_for_missing_dependencies(
+    step_name: str, dependencies: dict[str, str]
+) -> NoReturn:
     """Helper to raise an ImportError for missing dependencies and prompt the user to install said dependencies
 
     Args:
@@ -31,9 +39,7 @@ def _raise_error_for_missing_dependencies(step_name: str, dependencies: dict[str
     dependencies = dict(sorted(dependencies.items()))
     package_names = list(dependencies)
     if len(dependencies) > 1:
-        package_names = (
-            f"{','.join('`' + package_name + '`' for package_name in package_names[:-1])} and `{package_names[-1]}`"
-        )
+        package_names = f"{','.join('`' + package_name + '`' for package_name in package_names[:-1])} and `{package_names[-1]}`"
     else:
         package_names = f"`{package_names[0]}`"
     raise ImportError(

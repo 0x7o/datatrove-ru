@@ -46,7 +46,9 @@ class LocalPipelineExecutor(PipelineExecutor):
         local_rank_offset: int = 0,
         randomize_start_duration: int = 0,
     ):
-        super().__init__(pipeline, logging_dir, skip_completed, randomize_start_duration)
+        super().__init__(
+            pipeline, logging_dir, skip_completed, randomize_start_duration
+        )
         self.tasks = tasks
         self.workers = workers if workers != -1 else tasks
         self.start_method = start_method
@@ -59,7 +61,9 @@ class LocalPipelineExecutor(PipelineExecutor):
             )
         self._launched = False
 
-    def _launch_run_for_rank(self, rank: int, ranks_q, completed=None, completed_lock=None) -> PipelineStats:
+    def _launch_run_for_rank(
+        self, rank: int, ranks_q, completed=None, completed_lock=None
+    ) -> PipelineStats:
         """
             Small wrapper around _run_for_rank with a queue of available local ranks.
         Args:
@@ -99,12 +103,23 @@ class LocalPipelineExecutor(PipelineExecutor):
                 logger.info(f'Launching dependency job "{self.depends}"')
                 self.depends.run()
             while (incomplete := len(self.depends.get_incomplete_ranks())) > 0:
-                logger.info(f"Dependency job still has {incomplete}/{self.depends.world_size} tasks. Waiting...")
+                logger.info(
+                    f"Dependency job still has {incomplete}/{self.depends.world_size} tasks. Waiting..."
+                )
                 time.sleep(2 * 60)
 
         self._launched = True
-        if all(map(self.is_rank_completed, range(self.local_rank_offset, self.local_rank_offset + self.local_tasks))):
-            logger.info(f"Not doing anything as all {self.local_tasks} tasks have already been completed.")
+        if all(
+            map(
+                self.is_rank_completed,
+                range(
+                    self.local_rank_offset, self.local_rank_offset + self.local_tasks
+                ),
+            )
+        ):
+            logger.info(
+                f"Not doing anything as all {self.local_tasks} tasks have already been completed."
+            )
             return
 
         self.save_executor_as_json()

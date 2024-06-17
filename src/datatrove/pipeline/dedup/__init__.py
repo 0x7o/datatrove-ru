@@ -8,5 +8,10 @@ from .minhash import (
     MinhashDedupFilter,
     MinhashDedupSignature,
 )
-from .sentence_dedup import SentDedupConfig, SentenceDedupFilter, SentenceDedupSignature, SentenceFindDedups
+from .sentence_dedup import (
+    SentDedupConfig,
+    SentenceDedupFilter,
+    SentenceDedupSignature,
+    SentenceFindDedups,
+)
 from .url_dedup import UrlDedupConfig, UrlDedupFilter, UrlDedupSignature, UrlFindDedups

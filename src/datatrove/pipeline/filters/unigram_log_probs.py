@@ -27,7 +27,10 @@ class UnigramLogProbFilter(BaseFilter):
     name = "🧑‍🍳 Unigram log-prob filter"
 
     def __init__(
-        self, logprobs_threshold: float = -10, exclusion_writer: DiskWriter = None, language: str = Languages.english
+        self,
+        logprobs_threshold: float = -10,
+        exclusion_writer: DiskWriter = None,
+        language: str = Languages.english,
     ):
         """
 
@@ -42,7 +45,9 @@ class UnigramLogProbFilter(BaseFilter):
 
     def get_frequencies(self):
         download_dir = cached_assets_path(
-            library_name="datatrove", namespace="filters", subfolder="unigram_logprob_filter"
+            library_name="datatrove",
+            namespace="filters",
+            subfolder="unigram_logprob_filter",
         )
         unigram_freq_file = os.path.join(download_dir, "unigram_freq.csv")
         if not os.path.isfile(unigram_freq_file):

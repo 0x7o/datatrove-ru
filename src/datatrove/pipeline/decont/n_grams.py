@@ -45,7 +45,9 @@ class NGramsDecontConfig:
 
     n_grams: int = 12
     find_query_ngrams: bool = False  # enable to also check for matches in n-grams containing only the input/prompt
-    find_overlap_ngrams: bool = True  # will also find matches for n-grams containing BOTH input and query
+    find_overlap_ngrams: bool = (
+        True  # will also find matches for n-grams containing BOTH input and query
+    )
     norm_config: TextNormConfig = field(default_factory=TextNormConfig)
     hash_config: HashConfig = field(default_factory=HashConfig)
 
@@ -71,7 +73,9 @@ class NGramsDecontIndexer(PipelineStep):
     def __init__(
         self,
         output_folder: DataFolderLike,
-        lighteval_tasks: str | list[str] | None = None,  # list in the format suite|task or path to one such list
+        lighteval_tasks: str
+        | list[str]
+        | None = None,  # list in the format suite|task or path to one such list
         custom_lighteval_tasks: str | None = None,
         config: NGramsDecontConfig = None,
         language: str = Languages.english,
@@ -93,10 +97,14 @@ class NGramsDecontIndexer(PipelineStep):
         self.hash_func = create_hash_func(self.config.hash_config)
 
     def compute_hashes(self, label: str, query: str | None = None) -> list[int]:
-        label_tokens = self.tokenizer.word_tokenize(simplify_text(label, self.config.norm_config))
+        label_tokens = self.tokenizer.word_tokenize(
+            simplify_text(label, self.config.norm_config)
+        )
         ngrams_to_compute = list(ngrams(label_tokens, self.config.n_grams))
         if query is not None:
-            query_tokens = self.tokenizer.word_tokenize(simplify_text(query, self.config.norm_config))
+            query_tokens = self.tokenizer.word_tokenize(
+                simplify_text(query, self.config.norm_config)
+            )
             if self.config.find_query_ngrams:
                 ngrams_to_compute.extend(ngrams(query_tokens, self.config.n_grams))
             if self.config.find_overlap_ngrams:
@@ -110,10 +118,12 @@ class NGramsDecontIndexer(PipelineStep):
                 """
                 ngrams_to_compute.extend(
                     [
-                        query_tokens[-self.config.n_grams + 1 + i :] + label_tokens[: i + 1]
+                        query_tokens[-self.config.n_grams + 1 + i :]
+                        + label_tokens[: i + 1]
                         for i in range(self.config.n_grams - 1)
                         # make sure we actually get a list of size N
-                        if len(query_tokens) >= self.config.n_grams - 1 - i and len(label_tokens) >= i + 1
+                        if len(query_tokens) >= self.config.n_grams - 1 - i
+                        and len(label_tokens) >= i + 1
                     ]
                 )
         return list(map(self.hash_func, map(" ".join, ngrams_to_compute)))
@@ -156,9 +166,13 @@ class NGramsDecontIndexer(PipelineStep):
                     hashes[task_name].update(self.compute_hashes(gold, query))
 
         for task_name, task_hashes in hashes.items():
-            hashes_array = np.array(list(task_hashes), dtype=self.config.hash_config.np_descr)
+            hashes_array = np.array(
+                list(task_hashes), dtype=self.config.hash_config.np_descr
+            )
             logger.info(f"Saving {len(task_hashes)} hashes for {task_name}")
-            with self.output_folder.open(f"{task_name.replace(' ', '_')}.index.hashes", mode="wb") as f:
+            with self.output_folder.open(
+                f"{task_name.replace(' ', '_')}.index.hashes", mode="wb"
+            ) as f:
                 if self.output_folder.is_local():
                     hashes_array.tofile(f)
                 else:
@@ -195,9 +209,14 @@ class NGramsDecontFilter(BaseFilter):
     def load_index_hashes(self):
         def load_index_from_file(file):
             with self.index_folder.open(file, mode="rb") as f:
-                return file, read_np_from_file(
-                    f, np.dtype(self.config.hash_config.np_descr), self.index_folder.is_local()
-                ).tolist()
+                return (
+                    file,
+                    read_np_from_file(
+                        f,
+                        np.dtype(self.config.hash_config.np_descr),
+                        self.index_folder.is_local(),
+                    ).tolist(),
+                )
 
         with ThreadPoolExecutor() as pool:
             hashes = pool.map(load_index_from_file, self.index_folder.list_files())
@@ -213,7 +232,9 @@ class NGramsDecontFilter(BaseFilter):
         if self._index_hashes is None:
             self.load_index_hashes()
 
-        text_tokens = self.tokenizer.word_tokenize(simplify_text(doc.text, self.config.norm_config))
+        text_tokens = self.tokenizer.word_tokenize(
+            simplify_text(doc.text, self.config.norm_config)
+        )
         ngrams_to_compute = list(ngrams(text_tokens, self.config.n_grams))
         for n_gram in map(" ".join, ngrams_to_compute):
             task = self._index_hashes.get(self.hash_func(n_gram), None)

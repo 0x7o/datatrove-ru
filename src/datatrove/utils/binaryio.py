@@ -24,7 +24,9 @@ def read_tuples_from_file(file: BinaryIO, *formats, lines_to_buffer: int = 5):
     fstring = "<" + "".join(formats)
     reader = struct.Struct(fstring)
     while True:
-        chunk = file.read(lines_to_buffer * reader.size if lines_to_buffer != -1 else -1)
+        chunk = file.read(
+            lines_to_buffer * reader.size if lines_to_buffer != -1 else -1
+        )
         if not chunk:
             break
         yield from reader.iter_unpack(chunk)
@@ -51,7 +53,9 @@ def read_np_from_file(
             return np.frombuffer(file.read(), dtype=dtype)
 
 
-def seek_to_start(f: AbstractBufferedFile, start_hash: int, line_format: str, hash_format: str):
+def seek_to_start(
+    f: AbstractBufferedFile, start_hash: int, line_format: str, hash_format: str
+):
     if start_hash == 0:
         return
     line_size = struct.calcsize(line_format)

@@ -28,7 +28,9 @@ class TokensCounter(PipelineStepWithTokenizer):
         self.count_eos_token = count_eos_token
         self.batch_size = batch_size
 
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """
 
         Args:
@@ -45,7 +47,9 @@ class TokensCounter(PipelineStepWithTokenizer):
         # tokenize document's text in batches to go faster
         for batch in batched(data, self.batch_size):
             with self.track_time(unit="batch"):
-                encoded_batch: list[Encoding] = self.tokenizer.encode_batch([document.text for document in batch])
+                encoded_batch: list[Encoding] = self.tokenizer.encode_batch(
+                    [document.text for document in batch]
+                )
             for document, encoded in zip(batch, encoded_batch):
                 count = len(encoded.ids)
                 if self.count_eos_token:
@@ -66,7 +70,9 @@ class LengthCounter(PipelineStep):
     name = "📊 Document length counter"
     type = "🔢 - TOKENIZER"
 
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """
 
         Args:

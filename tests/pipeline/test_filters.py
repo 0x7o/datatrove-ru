@@ -48,13 +48,31 @@ class TestFilters(unittest.TestCase):
     def test_gopher_repetition(self):
         gopher_repetition = GopherRepetitionFilter()
 
-        self.check_filter(gopher_repetition, get_doc("I am your father.\n" * 4), "dup_line_frac")
-        self.check_filter(gopher_repetition, get_doc("I am your father.\n\n" * 4), "dup_para_frac")
-        text = "I am groot.\n\n" + "You are a wizard.\n\n" + "I am your father.\n\n" + f"{'x' * 30}.\n\n" * 2
+        self.check_filter(
+            gopher_repetition, get_doc("I am your father.\n" * 4), "dup_line_frac"
+        )
+        self.check_filter(
+            gopher_repetition, get_doc("I am your father.\n\n" * 4), "dup_para_frac"
+        )
+        text = (
+            "I am groot.\n\n"
+            + "You are a wizard.\n\n"
+            + "I am your father.\n\n"
+            + f"{'x' * 30}.\n\n" * 2
+        )
         self.check_filter(gopher_repetition, get_doc(text), "dup_para_char_frac")
-        doc = get_doc("I am groot.\n" + "You are a wizard.\n" + "I am your father.\n" + f"{'x' * 40}.\n" * 2)
+        doc = get_doc(
+            "I am groot.\n"
+            + "You are a wizard.\n"
+            + "I am your father.\n"
+            + f"{'x' * 40}.\n" * 2
+        )
         self.check_filter(gopher_repetition, doc, "dup_line_char_frac")
-        self.check_filter(gopher_repetition, get_doc("I am Frank, I am Frank, I am Frank"), "top_2_gram")
+        self.check_filter(
+            gopher_repetition,
+            get_doc("I am Frank, I am Frank, I am Frank"),
+            "top_2_gram",
+        )
         doc = get_doc("I am Frank, you are Jhon. I am Frank. I am Frank you are Jhon")
         self.check_filter(gopher_repetition, doc, "top_3_gram")
         doc = get_doc("I am Frank, you are Jhon. I am Frank. I am Frank you are Jhon")
@@ -64,18 +82,32 @@ class TestFilters(unittest.TestCase):
 
     def test_gopher_quality(self):
         gopher_quality = GopherQualityFilter(min_doc_words=10, max_doc_words=1000)
-        self.check_filter(gopher_quality, get_doc("I am too small..."), "gopher_short_doc")
-        self.check_filter(gopher_quality, get_doc("I am " * 20), "gopher_below_avg_threshold")
-        self.check_filter(gopher_quality, get_doc("interconnection " * 20), "gopher_above_avg_threshold")
-        self.check_filter(gopher_quality, get_doc("# comment " * 20), "gopher_too_many_hashes")
-        self.check_filter(gopher_quality, get_doc("... comment " * 20), "gopher_too_many_ellipsis")
+        self.check_filter(
+            gopher_quality, get_doc("I am too small..."), "gopher_short_doc"
+        )
+        self.check_filter(
+            gopher_quality, get_doc("I am " * 20), "gopher_below_avg_threshold"
+        )
+        self.check_filter(
+            gopher_quality,
+            get_doc("interconnection " * 20),
+            "gopher_above_avg_threshold",
+        )
+        self.check_filter(
+            gopher_quality, get_doc("# comment " * 20), "gopher_too_many_hashes"
+        )
+        self.check_filter(
+            gopher_quality, get_doc("... comment " * 20), "gopher_too_many_ellipsis"
+        )
         text = "the ./!*?<><> apple <?////> orange  ++ interconnection !<>??? have" * 20
         self.check_filter(gopher_quality, get_doc(text), "gopher_below_alpha_threshold")
         self.assertTrue(gopher_quality(get_doc(TEXT_LF_1)))
 
     def test_lambda(self):
         doc = Document(text=TEXT_LF_1, id="0", metadata={"test": 1})
-        lambda_filter = LambdaFilter(filter_function=lambda doc: doc.metadata["test"] > 0)
+        lambda_filter = LambdaFilter(
+            filter_function=lambda doc: doc.metadata["test"] > 0
+        )
         self.assertTrue(lambda_filter.filter(doc))
         doc.metadata["test"] = -1
         self.assertFalse(lambda_filter.filter(doc))
@@ -98,11 +130,17 @@ class TestFilters(unittest.TestCase):
     def test_unigram_prob(self):
         unigram_filter = UnigramLogProbFilter(logprobs_threshold=-10)
         self.assertTrue(unigram_filter.filter(Document(text=TEXT_LF_1, id="0")))
-        self.assertFalse(unigram_filter.filter(Document(text="Cacophony Pareidolia Serendipity", id="0")))
+        self.assertFalse(
+            unigram_filter.filter(
+                Document(text="Cacophony Pareidolia Serendipity", id="0")
+            )
+        )
 
     @require_tldextract
     def test_url(self):
-        url_filter = URLFilter(extra_domains=("blocked.com", "danger.org", "badsubdomain.nice.com"))
+        url_filter = URLFilter(
+            extra_domains=("blocked.com", "danger.org", "badsubdomain.nice.com")
+        )
 
         for url, result in (
             ("https://blocked.com/some-sub-url?with=stuff", "domain"),

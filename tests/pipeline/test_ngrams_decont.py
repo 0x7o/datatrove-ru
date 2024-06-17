@@ -4,7 +4,11 @@ import tempfile
 import unittest
 
 from datatrove.data import Document
-from datatrove.pipeline.decont import NGramsDecontConfig, NGramsDecontFilter, NGramsDecontIndexer
+from datatrove.pipeline.decont import (
+    NGramsDecontConfig,
+    NGramsDecontFilter,
+    NGramsDecontIndexer,
+)
 from tests.utils import require_xxhash, use_hash_configs
 
 
@@ -37,7 +41,9 @@ class TestNGramDecont(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp_dir)
 
     def get_test_results(self, config):
-        indexer = NGramsDecontIndexer(self.tmp_dir, lighteval_tasks="leaderboard|hellaswag", config=config)
+        indexer = NGramsDecontIndexer(
+            self.tmp_dir, lighteval_tasks="leaderboard|hellaswag", config=config
+        )
         indexer.run()
         nfilter = NGramsDecontFilter(self.tmp_dir, config=config)
         return tuple([int(doc.id) for doc in nfilter(copy.deepcopy(DOCS))])
@@ -46,18 +52,27 @@ class TestNGramDecont(unittest.TestCase):
     def test_label_only(self, hash_config):
         self.assertEqual(
             self.get_test_results(
-                NGramsDecontConfig(find_query_ngrams=False, find_overlap_ngrams=False, hash_config=hash_config)
+                NGramsDecontConfig(
+                    find_query_ngrams=False,
+                    find_overlap_ngrams=False,
+                    hash_config=hash_config,
+                )
             ),
             (0, 2, 3, 4, 5, 6),
         )
 
     def test_query(self):
         self.assertEqual(
-            self.get_test_results(NGramsDecontConfig(find_query_ngrams=True, find_overlap_ngrams=False)), (2, 3, 5, 6)
+            self.get_test_results(
+                NGramsDecontConfig(find_query_ngrams=True, find_overlap_ngrams=False)
+            ),
+            (2, 3, 5, 6),
         )
 
     def test_overlap(self):
         self.assertEqual(
-            self.get_test_results(NGramsDecontConfig(find_query_ngrams=False, find_overlap_ngrams=True)),
+            self.get_test_results(
+                NGramsDecontConfig(find_query_ngrams=False, find_overlap_ngrams=True)
+            ),
             (0, 3, 4, 5, 6),
         )

@@ -179,7 +179,9 @@ class TestExactSubstr(unittest.TestCase):
 
     def match_doc(self, sequence, size, reader, docs):
         for i, doc_text in enumerate(sequence_reader(sequence, size)):
-            self.assertEqual(docs[i].text, reader.tokenizer.decode(read_bytes(doc_text)))
+            self.assertEqual(
+                docs[i].text, reader.tokenizer.decode(read_bytes(doc_text))
+            )
 
     def test_signature_1_worker(self):
         data = copy.deepcopy(DATA)
@@ -195,7 +197,9 @@ class TestExactSubstr(unittest.TestCase):
             min_doc_words=0,
         )
 
-        with merge_sequence.data_folder.open("test" + ExtensionHelperES.stage_3_bytes_ranges, "w") as f:
+        with merge_sequence.data_folder.open(
+            "test" + ExtensionHelperES.stage_3_bytes_ranges, "w"
+        ) as f:
             f.write(bytearange_file)
 
         # test quality of stage 1, 2 output
@@ -220,7 +224,9 @@ class TestExactSubstr(unittest.TestCase):
                 dedup_reader.sequence_folder.open(size_file, "rb"),
             )
         ):
-            self.assertEqual(data[i].text, dedup_reader.tokenizer.decode(read_bytes(doc_content)))
+            self.assertEqual(
+                data[i].text, dedup_reader.tokenizer.decode(read_bytes(doc_content))
+            )
 
         self.match_doc(
             dedup_reader.sequence_folder.open(sequence_file, "rb"),
@@ -247,7 +253,9 @@ class TestExactSubstr(unittest.TestCase):
             min_doc_words=0,
         )
 
-        with merge_sequence.data_folder.open("test" + ExtensionHelperES.stage_3_bytes_ranges, "w") as f:
+        with merge_sequence.data_folder.open(
+            "test" + ExtensionHelperES.stage_3_bytes_ranges, "w"
+        ) as f:
             f.write(bytearange_file_2)
 
         # test quality of stage 1, 2 output
@@ -263,7 +271,9 @@ class TestExactSubstr(unittest.TestCase):
         bytes_offset = dedup_reader.sequence_bytes_offset
         with merge_sequence.data_folder.open("00001.es_sequence", "rb") as f_1:
             with merge_sequence.data_folder.open("00000.es_sequence", "rb") as f_0:
-                with merge_sequence.data_folder.open("dataset.big_sequence", "rb") as f_b:
+                with merge_sequence.data_folder.open(
+                    "dataset.big_sequence", "rb"
+                ) as f_b:
                     sequence_0 = f_0.read()
                     sequence_1 = f_1.read()
                     self.assertEqual(sequence_0 + sequence_1, f_b.read())

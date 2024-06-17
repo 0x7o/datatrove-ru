@@ -2,7 +2,11 @@ import os
 
 from datatrove.executor.base import PipelineExecutor
 from datatrove.executor.local import LocalPipelineExecutor
-from datatrove.pipeline.dedup import ESDatasetToSequence, ESMergeSequences, ESRangeRemover
+from datatrove.pipeline.dedup import (
+    ESDatasetToSequence,
+    ESMergeSequences,
+    ESRangeRemover,
+)
 from datatrove.pipeline.extractors import Trafilatura
 from datatrove.pipeline.filters import GopherQualityFilter, LanguageFilter
 from datatrove.pipeline.readers import JsonlReader, WarcReader
@@ -52,9 +56,13 @@ def run_step_1_and_2():
         )
     ]
 
-    executor_1: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_1, workers=4, tasks=4)
+    executor_1: PipelineExecutor = LocalPipelineExecutor(
+        pipeline=pipeline_1, workers=4, tasks=4
+    )
 
-    executor_2: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_2, workers=1, tasks=1)
+    executor_2: PipelineExecutor = LocalPipelineExecutor(
+        pipeline=pipeline_2, workers=1, tasks=1
+    )
 
     print(executor_1.run())
     print(executor_2.run())
@@ -62,13 +70,17 @@ def run_step_1_and_2():
 
 def run_step_3():
     pipeline_3 = [
-        JsonlReader("intermediate/"),  # must be the same data that was passed to DatasetToSequence
+        JsonlReader(
+            "intermediate/"
+        ),  # must be the same data that was passed to DatasetToSequence
         ESRangeRemover(
             sequence_folder=f"{os.getcwd()}/es/",
         ),
         JsonlWriter("final-deduped-data"),
     ]
 
-    executor_3: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_3, workers=4, tasks=4)
+    executor_3: PipelineExecutor = LocalPipelineExecutor(
+        pipeline=pipeline_3, workers=4, tasks=4
+    )
 
     print(executor_3.run())

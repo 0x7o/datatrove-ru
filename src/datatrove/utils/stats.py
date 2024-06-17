@@ -39,13 +39,20 @@ class MetricStatsDict(defaultdict):
         Returns:
 
         """
-        return MetricStatsDict(init={s: self.get(s) for s in heapq.nlargest(k, self, key=lambda s: self.get(s).total)})
+        return MetricStatsDict(
+            init={
+                s: self.get(s)
+                for s in heapq.nlargest(k, self, key=lambda s: self.get(s).total)
+            }
+        )
 
     def __repr__(self):
         return ", ".join(f"{key}: {stats}" for key, stats in self.items())
 
     def to_dict(self):
-        return {a: (b.to_dict() if hasattr(b, "to_dict") else b) for a, b in self.items()}
+        return {
+            a: (b.to_dict() if hasattr(b, "to_dict") else b) for a, b in self.items()
+        }
 
 
 class Stats:
@@ -68,7 +75,9 @@ class Stats:
         self.stats[key] = value
 
     def __add__(self, stat):
-        assert self.name == stat.name, f"Can not merge stats from different blocks {self.name} != {stat.name}"
+        assert (
+            self.name == stat.name
+        ), f"Can not merge stats from different blocks {self.name} != {stat.name}"
         result = Stats(self.name)
         result.time_stats = self.time_stats + stat.time_stats
         result.stats = self.stats + stat.stats
@@ -80,7 +89,9 @@ class Stats:
                 lambda x: x is not None,
                 [
                     f"{self.name}",
-                    f"Runtime: {self.time_stats.get_repr(total_time)}" if self.time_stats.total > 0 else None,
+                    f"Runtime: {self.time_stats.get_repr(total_time)}"
+                    if self.time_stats.total > 0
+                    else None,
                     f"Stats: {{{self.stats}}}" if len(self.stats) > 0 else None,
                 ],
             )
@@ -130,7 +141,9 @@ class PipelineStats:
         self.stats: list[Stats] = stats if stats else []
         if self.stats and not isinstance(self.stats[0], Stats):
             self.stats: list[Stats] = [
-                pipeline_step.stats for pipeline_step in self.stats if hasattr(pipeline_step, "stats")
+                pipeline_step.stats
+                for pipeline_step in self.stats
+                if hasattr(pipeline_step, "stats")
             ]
 
     def __add__(self, pipestat):
@@ -144,7 +157,9 @@ class PipelineStats:
 
     @property
     def total_std_dev(self):
-        return math.sqrt(sum((stat.time_stats.global_std_dev**2 for stat in self.stats)))
+        return math.sqrt(
+            sum((stat.time_stats.global_std_dev**2 for stat in self.stats))
+        )
 
     def get_repr(self, text=None):
         """
@@ -160,7 +175,11 @@ class PipelineStats:
         x = (
             f"\n\n{'📉' * 3} Stats{': ' + text if text else ''} {'📉' * 3}\n\n"
             + f"Total Runtime: {humanize.precisedelta(total_time)}"
-            + (f" ± {humanize.precisedelta(total_std_dev)}/task" if total_std_dev != 0.0 else "")
+            + (
+                f" ± {humanize.precisedelta(total_std_dev)}/task"
+                if total_std_dev != 0.0
+                else ""
+            )
             + "\n\n"
         )
         x += "\n".join([stat.__repr__(total_time) for stat in self.stats])
@@ -253,7 +272,9 @@ class MetricStats:
             mean = (self.n * self.mean + other.n * other.mean) / n
             delta = self.mean - other.mean
             _running_variance = (
-                self._running_variance + other._running_variance + (delta * delta * self.n * other.n) / n
+                self._running_variance
+                + other._running_variance
+                + (delta * delta * self.n * other.n) / n
             )
 
         total = self.total + other.total
@@ -326,7 +347,11 @@ class MetricStats:
                 (f"{self.mean:.2f}", True),
                 (f"±{self.standard_deviation:.0f}", self.standard_deviation != 0.0),
             ]
-            return f"{self.total} [" + "".join([t for t, c in elements if c]) + f"/{self.unit}]"
+            return (
+                f"{self.total} ["
+                + "".join([t for t, c in elements if c])
+                + f"/{self.unit}]"
+            )
         return str(self.total)
 
 
@@ -377,7 +402,10 @@ class TimingStats(MetricStats):
         s = (
             s1
             + s2
-            + (self.global_mean - other.global_mean) ** 2 * self.n_tasks * other.n_tasks / new_time_stats.n_tasks
+            + (self.global_mean - other.global_mean) ** 2
+            * self.n_tasks
+            * other.n_tasks
+            / new_time_stats.n_tasks
         )
         new_time_stats.global_std_dev = math.sqrt(s / (new_time_stats.n_tasks - 1))
         return new_time_stats
@@ -407,9 +435,21 @@ class TimingStats(MetricStats):
         return (
             f"({self._get_time_frac(total_time):.2%})"
             + f" {humanize.precisedelta(self.global_mean)}"
-            + (f"±{humanize.precisedelta(self.global_std_dev)}/task" if self.global_std_dev != 0 else "")
-            + (f", min={humanize.precisedelta(self.global_min)}" if self.global_min != self.total else "")
-            + (f", max={humanize.precisedelta(self.global_max)}" if self.global_max != self.total else "")
+            + (
+                f"±{humanize.precisedelta(self.global_std_dev)}/task"
+                if self.global_std_dev != 0
+                else ""
+            )
+            + (
+                f", min={humanize.precisedelta(self.global_min)}"
+                if self.global_min != self.total
+                else ""
+            )
+            + (
+                f", max={humanize.precisedelta(self.global_max)}"
+                if self.global_max != self.total
+                else ""
+            )
             + f" [{humanize.precisedelta(datetime.timedelta(seconds=self.mean), minimum_unit='milliseconds')}"
             + f"±{humanize.precisedelta(datetime.timedelta(seconds=self.standard_deviation), minimum_unit='milliseconds')}/{self.unit}]"
         )
@@ -425,7 +465,8 @@ class TimingStats(MetricStats):
                 datetime.timedelta(seconds=self.mean), minimum_unit="milliseconds"
             )
             data["std_dev_human"] = humanize.precisedelta(
-                datetime.timedelta(seconds=self.standard_deviation), minimum_unit="milliseconds"
+                datetime.timedelta(seconds=self.standard_deviation),
+                minimum_unit="milliseconds",
             )
             data["min_human"] = humanize.precisedelta(
                 datetime.timedelta(seconds=self.min), minimum_unit="milliseconds"
@@ -441,7 +482,9 @@ class TimingStats(MetricStats):
                 data["global_max"] = self.global_max
                 data["global_max_human"] = humanize.precisedelta(self.global_max)
                 data["global_std_dev"] = self.global_std_dev
-                data["global_std_dev_human"] = humanize.precisedelta(self.global_std_dev)
+                data["global_std_dev_human"] = humanize.precisedelta(
+                    self.global_std_dev
+                )
         return data
 
     @classmethod

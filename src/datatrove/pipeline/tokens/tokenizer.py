@@ -13,7 +13,9 @@ from datatrove.utils.tokenization import PipelineStepWithTokenizer, batched
 
 SHUFFLING_READ_BLOCK_SIZE = 50000  # read 50kb at a time only (~mean + 2sigmas for final filtered common crawl docs)
 # at a time to avoid reading a lot of data into cache and then not using it when jumping again
-SHUFFLING_CACHE_TYPE = "none"  # do not cache as we are only jumping around and not reading sequentially
+SHUFFLING_CACHE_TYPE = (
+    "none"  # do not cache as we are only jumping around and not reading sequentially
+)
 
 if TYPE_CHECKING:
     from tokenizers import Encoding
@@ -57,10 +59,14 @@ class TokenizedFile:
         self.tokenizer_name_or_path = tokenizer_name_or_path
         self.save_final_metadata = save_final_metadata
 
-        self.tokens_file = self.output_folder.open(self.filename, mode="wb", block_size=upload_block_size)
+        self.tokens_file = self.output_folder.open(
+            self.filename, mode="wb", block_size=upload_block_size
+        )
         self.loss_file: DataFolderLike | None = None
         if self.save_loss_metadata:
-            self.loss_file = self.output_folder.open(f"{self.filename}.loss", mode="wb", block_size=upload_block_size)
+            self.loss_file = self.output_folder.open(
+                f"{self.filename}.loss", mode="wb", block_size=upload_block_size
+            )
 
     def __len__(self):
         return self.doc_ends[-1] if self.doc_ends else 0
@@ -89,7 +95,9 @@ class TokenizedFile:
         self.output_folder.rm_file(self.filename)
         if self.loss_file:
             self.output_folder.rm_file(f"{self.filename}.loss")
-        if self.save_final_metadata and self.output_folder.exists(f"{self.filename}.metadata"):
+        if self.save_final_metadata and self.output_folder.exists(
+            f"{self.filename}.metadata"
+        ):
             self.output_folder.rm_file(f"{self.filename}.metadata")
 
     def write_bytes(self, tk_bytes: bytes, doc_ends: list[int] = None):
@@ -157,7 +165,10 @@ class TokenizedFile:
         """
         # open original file in read mode
         with self.output_folder.open(
-            self.filename, mode="rb", cache_type=SHUFFLING_CACHE_TYPE, block_size=SHUFFLING_READ_BLOCK_SIZE
+            self.filename,
+            mode="rb",
+            cache_type=SHUFFLING_CACHE_TYPE,
+            block_size=SHUFFLING_READ_BLOCK_SIZE,
         ) as tokens_file:
             loss_file = (
                 None
@@ -166,7 +177,8 @@ class TokenizedFile:
                     f"{self.filename}.loss",
                     mode="rb",
                     cache_type=SHUFFLING_CACHE_TYPE,
-                    block_size=SHUFFLING_READ_BLOCK_SIZE // 2,  # this one is half the size
+                    block_size=SHUFFLING_READ_BLOCK_SIZE
+                    // 2,  # this one is half the size
                 )
             )
             sub_rank = 0
@@ -186,7 +198,10 @@ class TokenizedFile:
             total_tokens_written = 0
             for doc_id in ordering:
                 # get start and end from the boundaries
-                start, end = self.doc_ends[doc_id - 1] if doc_id > 0 else 0, self.doc_ends[doc_id]
+                start, end = (
+                    self.doc_ends[doc_id - 1] if doc_id > 0 else 0,
+                    self.doc_ends[doc_id],
+                )
                 # copy the bytes. each token is token_size bytes
                 tokens_file.seek(start * self.token_size)
                 new_file.write_bytes(tokens_file.read((end - start) * self.token_size))
@@ -198,9 +213,13 @@ class TokenizedFile:
                 if max_tokens_per_file and total_tokens_written > max_tokens_per_file:
                     new_file.close()
                     sub_rank += 1
-                    destination = get_output_filename(save_filename, rank, "shuffled", sub_rank)
+                    destination = get_output_filename(
+                        save_filename, rank, "shuffled", sub_rank
+                    )
                     new_file = TokenizedFile(
-                        self.output_folder if not new_output_folder else new_output_folder,
+                        self.output_folder
+                        if not new_output_folder
+                        else new_output_folder,
                         destination,
                         save_loss_metadata=self.save_loss_metadata,
                         upload_block_size=self.upload_block_size,
@@ -245,7 +264,13 @@ class TokenizedFile:
 def get_output_filename(save_filename, rank: int, name: str, sub_rank: int = None):
     """Get an output filename for the rank and a sub-step name (unshuffled/shuffled)."""
     if sub_rank is not None:
-        return "_".join([x for x in [save_filename, f"{rank:05d}", f"{sub_rank:05d}", f"{name}.ds"] if x])
+        return "_".join(
+            [
+                x
+                for x in [save_filename, f"{rank:05d}", f"{sub_rank:05d}", f"{name}.ds"]
+                if x
+            ]
+        )
     return "_".join([x for x in [save_filename, f"{rank:05d}", f"{name}.ds"] if x])
 
 
@@ -294,10 +319,16 @@ class DocumentTokenizer(PipelineStepWithTokenizer):
     ):
         super().__init__()
         self.output_folder = get_datafolder(output_folder)
-        self.local_working_dir = get_datafolder(local_working_dir) if local_working_dir else None
+        self.local_working_dir = (
+            get_datafolder(local_working_dir) if local_working_dir else None
+        )
         if self.local_working_dir and not self.local_working_dir.is_local():
             raise ValueError("local_working_dir must be a local path")
-        if self.local_working_dir is None and shuffle and not self.output_folder.is_local():
+        if (
+            self.local_working_dir is None
+            and shuffle
+            and not self.output_folder.is_local()
+        ):
             logger.warning(
                 "local_working_dir is not set and output folder is not local. This may slow down the process."
             )
@@ -326,7 +357,9 @@ class DocumentTokenizer(PipelineStepWithTokenizer):
             loss_values = np.ones((len(encoded.ids)))
             if no_loss := document.metadata.get("no_loss_ranges", None):
                 for start, end in no_loss:
-                    t_start, t_end = encoded.char_to_token(start), encoded.char_to_token(end)
+                    t_start, t_end = encoded.char_to_token(
+                        start
+                    ), encoded.char_to_token(end)
                     # set loss to 0
                     loss_values[t_start:t_end] = 0
                     if t_end is None or t_end >= len(encoded.ids):
@@ -345,7 +378,9 @@ class DocumentTokenizer(PipelineStepWithTokenizer):
         from tokenizers import Encoding
 
         unshuff = TokenizedFile(
-            self.output_folder if not self.shuffle or not self.local_working_dir else self.local_working_dir,
+            self.output_folder
+            if not self.shuffle or not self.local_working_dir
+            else self.local_working_dir,
             filename,
             save_index=not self.shuffle,
             save_loss_metadata=self.save_loss_metadata,
@@ -357,7 +392,9 @@ class DocumentTokenizer(PipelineStepWithTokenizer):
         # tokenize document's text in batches to go faster – we compute loss values independently if needed
         for batch in batched(data, self.batch_size):
             with self.track_time(unit="batch"):
-                encoded_batch: list[Encoding] = self.tokenizer.encode_batch([document.text for document in batch])
+                encoded_batch: list[Encoding] = self.tokenizer.encode_batch(
+                    [document.text for document in batch]
+                )
                 for document, encoded in zip(batch, encoded_batch):
                     tokens = encoded.ids
                     loss_values = self.get_loss_values(document, encoded)
@@ -371,7 +408,9 @@ class DocumentTokenizer(PipelineStepWithTokenizer):
         unshuff.close()
         return unshuff
 
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """Main method to run the tokenization.
             We first batch tokenize the documents and write them to a file.
             Then we shuffle the documents and write them to a new file if self.shuffle is True (and remove the original file)

@@ -28,16 +28,26 @@ executor = SlurmPipelineExecutor(
             glob_pattern="*/warc/*",  # we want the warc files
             default_metadata={"dump": DUMP},
         ),
-        URLFilter(exclusion_writer=JsonlWriter(f"{MAIN_OUTPUT_PATH}/removed/url/{DUMP}")),
+        URLFilter(
+            exclusion_writer=JsonlWriter(f"{MAIN_OUTPUT_PATH}/removed/url/{DUMP}")
+        ),
         Trafilatura(favour_precision=True),
         LanguageFilter(
             exclusion_writer=JsonlWriter(
                 f"{MAIN_OUTPUT_PATH}/non_english/",
-                output_filename="${language}/" + DUMP + "/${rank}.jsonl.gz",  # folder structure: language/dump/file
+                output_filename="${language}/"
+                + DUMP
+                + "/${rank}.jsonl.gz",  # folder structure: language/dump/file
             )
         ),
-        GopherRepetitionFilter(exclusion_writer=JsonlWriter(f"{MAIN_OUTPUT_PATH}/removed/repetitive/{DUMP}")),
-        GopherQualityFilter(exclusion_writer=JsonlWriter(f"{MAIN_OUTPUT_PATH}/removed/quality/{DUMP}")),
+        GopherRepetitionFilter(
+            exclusion_writer=JsonlWriter(
+                f"{MAIN_OUTPUT_PATH}/removed/repetitive/{DUMP}"
+            )
+        ),
+        GopherQualityFilter(
+            exclusion_writer=JsonlWriter(f"{MAIN_OUTPUT_PATH}/removed/quality/{DUMP}")
+        ),
         JsonlWriter(f"{MAIN_OUTPUT_PATH}/output/{DUMP}"),
     ],
     tasks=8000,

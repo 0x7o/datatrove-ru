@@ -55,14 +55,18 @@ def run_example(args):
         UrlDedupFilter(
             data_folder=f"{args.sigs_dup_folder}/dups",
             config=url_dedup_config,
-            exclusion_writer=JsonlWriter(output_folder=f"{args.base_output_folder}/removed"),
+            exclusion_writer=JsonlWriter(
+                output_folder=f"{args.base_output_folder}/removed"
+            ),
         ),
         JsonlWriter(output_folder=f"{args.base_output_folder}/output"),
     ]
 
     executor_1: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_1, tasks=4)
 
-    executor_2: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_2, tasks=FINDER_WORKERS)
+    executor_2: PipelineExecutor = LocalPipelineExecutor(
+        pipeline=pipeline_2, tasks=FINDER_WORKERS
+    )
 
     executor_3: PipelineExecutor = LocalPipelineExecutor(pipeline=pipeline_3, tasks=4)
 

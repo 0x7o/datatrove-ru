@@ -32,7 +32,11 @@ class WarcReader(BaseDiskReader):
     """
 
     name = "🕷 Warc"
-    _requires_dependencies = ["warcio", ("cchardet", "faust-cchardet"), ("magic", "python-magic")]
+    _requires_dependencies = [
+        "warcio",
+        ("cchardet", "faust-cchardet"),
+        ("magic", "python-magic"),
+    ]
 
     def __init__(
         self,
@@ -87,13 +91,16 @@ def process_record(record: "ArcWarcRecord") -> dict | None:
     import magic
 
     # record type
-    if record.rec_type != "response" and record.rec_type != "conversion":  # wet files have "conversion" type
+    if (
+        record.rec_type != "response" and record.rec_type != "conversion"
+    ):  # wet files have "conversion" type
         return
 
     # content type filtering
     mime_type = record.rec_headers.get("WARC-Identified-Payload-Type", None)
     if mime_type is not None and (
-        mime_type != "text/html" and (record.rec_type != "conversion" or mime_type != "text/plain")
+        mime_type != "text/html"
+        and (record.rec_type != "conversion" or mime_type != "text/plain")
     ):
         return
 
@@ -101,7 +108,9 @@ def process_record(record: "ArcWarcRecord") -> dict | None:
     if mime_type is None:
         # fallback for older crawls without payload types
         mime_type = magic.from_buffer(content_bytes, mime=True)
-        if mime_type != "text/html" and (record.rec_type != "conversion" or mime_type != "text/plain"):
+        if mime_type != "text/html" and (
+            record.rec_type != "conversion" or mime_type != "text/plain"
+        ):
             return
 
     # Decode the response bytes

@@ -42,7 +42,9 @@ class BaseFilter(PipelineStep, ABC):
         """
         raise NotImplementedError
 
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         with self.exclusion_writer if self.exclusion_writer else contextlib.nullcontext() as writer:
             for doc in data:
                 self.stat_update(StatHints.total)

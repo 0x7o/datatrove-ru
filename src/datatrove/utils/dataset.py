@@ -38,7 +38,9 @@ if is_torch_available():
             fsize = self.fs.size(self.file_path)
             # total number of full contexts in this file
             num_tokens = fsize // self.token_size
-            self._len = (min(max_tokens, num_tokens) if max_tokens else num_tokens) // (seq_len + 1)
+            self._len = (min(max_tokens, num_tokens) if max_tokens else num_tokens) // (
+                seq_len + 1
+            )
             self._f = None
 
         def __getitem__(self, item):
@@ -48,9 +50,10 @@ if is_torch_available():
             self._f.seek(item * chunk_size)
             return {
                 "input_ids": torch.as_tensor(
-                    np.frombuffer(self._f.read(chunk_size), np.uint16 if self.token_size == 2 else np.uint32).astype(
-                        np.int64
-                    ),
+                    np.frombuffer(
+                        self._f.read(chunk_size),
+                        np.uint16 if self.token_size == 2 else np.uint32,
+                    ).astype(np.int64),
                     dtype=torch.long,
                 )
             }
@@ -93,12 +96,16 @@ if is_torch_available():
             self.filename_pattern = filename_pattern
             fs, folder_path = url_to_fs(folder_path)
             matched_files = (
-                fs.find(folder_path, detail=False, maxdepth=1 if not recursive else None)
+                fs.find(
+                    folder_path, detail=False, maxdepth=1 if not recursive else None
+                )
                 if not filename_pattern
                 else fs.glob(filename_pattern, maxdepth=1 if not recursive else None)
             )
             if not matched_files:
-                raise FileNotFoundError(f'No files matching "{filename_pattern}" found in {folder_path}')
+                raise FileNotFoundError(
+                    f'No files matching "{filename_pattern}" found in {folder_path}'
+                )
 
             self.files = []
             remaining_tokens = max_tokens
@@ -126,7 +133,9 @@ if is_torch_available():
 
         def __getitem__(self, item):
             # check if we are in the same file as before
-            if not (self.lens[self.current_file] <= item < self.lens[self.current_file + 1]):
+            if not (
+                self.lens[self.current_file] <= item < self.lens[self.current_file + 1]
+            ):
                 # figure out current file
                 self.current_file = bisect(self.lens, item) - 1
             # subtract file starting offset
@@ -134,6 +143,7 @@ if is_torch_available():
 
         def __len__(self):
             return self.lens[-1] if self.lens else 0
+
 else:
     DatatroveFileDataset = NotImplemented
     DatatroveFolderDataset = NotImplemented

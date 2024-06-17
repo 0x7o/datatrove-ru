@@ -91,7 +91,9 @@ class UrlDedupSignature(PipelineStep):
         if finder_workers <= 0:
             raise ValueError("finder_workers must be >= 1")
         elif finder_workers > 1:
-            logger.warning(f"Remember to also set the number of tasks of the finder block to {finder_workers=}!")
+            logger.warning(
+                f"Remember to also set the number of tasks of the finder block to {finder_workers=}!"
+            )
         self.finder_workers = finder_workers
         self.config = config or UrlDedupConfig()
         self.hash_fc = create_hash_func(self.config.hash_config)
@@ -121,11 +123,15 @@ class UrlDedupSignature(PipelineStep):
             ) as f:
                 # last bucket needs to have everything
                 right_hash = (
-                    (hash_i + 1) * hashes_per_worker if hash_i != self.finder_workers - 1 else np.iinfo(np.uint64).max
+                    (hash_i + 1) * hashes_per_worker
+                    if hash_i != self.finder_workers - 1
+                    else np.iinfo(np.uint64).max
                 )
                 # find last hash that goes in this bucket. This obeys the following rule:
                 # signatures['hash'][right_idx - 1] <= right_hash <= signatures['hash'][right_idx]
-                right_idx = left_idx + signatures["hash"][left_idx:].searchsorted(right_hash, side="right")
+                right_idx = left_idx + signatures["hash"][left_idx:].searchsorted(
+                    right_hash, side="right"
+                )
                 # save to file
                 if right_idx > left_idx:
                     bts = signatures[left_idx:right_idx].tobytes()
@@ -135,11 +141,17 @@ class UrlDedupSignature(PipelineStep):
                 if right_idx >= len(signatures):
                     break
 
-    def get_hashes(self, doc: Document, doc_idx: int) -> list[None] | list[tuple[int, int, int]]:
+    def get_hashes(
+        self, doc: Document, doc_idx: int
+    ) -> list[None] | list[tuple[int, int, int]]:
         normalized_url: str = (
-            self.config.url_normalizer(doc.metadata["url"]) if self.config.url_normalizer else doc.metadata["url"]
+            self.config.url_normalizer(doc.metadata["url"])
+            if self.config.url_normalizer
+            else doc.metadata["url"]
         )
-        priority = self.config.document_priority(doc) if self.config.document_priority else 1
+        priority = (
+            self.config.document_priority(doc) if self.config.document_priority else 1
+        )
         hashes = [(self.hash_fc(normalized_url), priority, doc_idx)]
 
         return hashes
@@ -161,14 +173,28 @@ def read_sigs(
     lines_to_buffer: int = 5,
 ) -> Generator[HashSig, None, None]:
     last = None
-    line_format = f"{hash_config.struct_format}HI" if not index_file else hash_config.struct_format
+    line_format = (
+        f"{hash_config.struct_format}HI"
+        if not index_file
+        else hash_config.struct_format
+    )
     with file as f:
         file_stem = Path(f.path).name.removesuffix(ExtensionHelperSD.stage_1_signature)
-        for data in read_tuples_from_file(f, line_format, lines_to_buffer=lines_to_buffer):
-            assert last is None or data[0] >= last, f"Hash order error. {f.tell()=}, {data[0]=}, {last=}"
+        for data in read_tuples_from_file(
+            f, line_format, lines_to_buffer=lines_to_buffer
+        ):
+            assert (
+                last is None or data[0] >= last
+            ), f"Hash order error. {f.tell()=}, {data[0]=}, {last=}"
             last = data[0]
             yield (
-                HashSig(hash_value=data[0], doc_id=-1, file_id=file_id, priority=-1, file_stem=file_stem)
+                HashSig(
+                    hash_value=data[0],
+                    doc_id=-1,
+                    file_id=file_id,
+                    priority=-1,
+                    file_stem=file_stem,
+                )
                 if index_file
                 else HashSig(
                     file_id=file_id,
@@ -217,7 +243,9 @@ class UrlFindDedups(PipelineStep):
         with self.stats.time_stats:
             if world_size == 1:
                 # check that there was not a mistake in setting this values
-                sig_files = self.data_folder.list_files(glob_pattern="*/*" + ExtensionHelperSD.stage_1_signature)
+                sig_files = self.data_folder.list_files(
+                    glob_pattern="*/*" + ExtensionHelperSD.stage_1_signature
+                )
                 if any(not sig_file.startswith("0000/") for sig_file in sig_files):
                     raise ValueError(
                         f"{world_size=} but found sig files for different hash buckets. Set tasks=finder_workers"
@@ -248,7 +276,9 @@ class UrlFindDedups(PipelineStep):
                             index_file=True,
                             lines_to_buffer=self.lines_to_buffer,
                         )
-                        for file_i, file in enumerate(self.data_folder.open_files(index_files))
+                        for file_i, file in enumerate(
+                            self.data_folder.open_files(index_files)
+                        )
                     ]
                 )
 
@@ -273,7 +303,11 @@ class UrlFindDedups(PipelineStep):
                 v: HashSig = heapq.heappop(pq)
                 if last and last.hash_value == v.hash_value and not v.is_from_index():
                     out_filename = f"{rank:04d}/{v.file_stem}{ExtensionHelperSD.stage_2_duplicates}"
-                    if not index_files or last.is_from_index() or not self.config.only_dedup_in_index:
+                    if (
+                        not index_files
+                        or last.is_from_index()
+                        or not self.config.only_dedup_in_index
+                    ):
                         doc_id_bytes = packer.pack(v.doc_id)
                         output_mg.write(out_filename, doc_id_bytes)
                 last = v
@@ -312,14 +346,19 @@ class UrlDedupFilter(PipelineStep):
     def read_duplicates(self, file: BinaryIO, dup_dtype: np.dtype) -> np.ndarray:
         """Helper function to read duplicates from a binary file storing (doc_id) as created by the second stage."""
         with file as f:
-            return read_np_from_file(f, dtype=dup_dtype, is_local_file=self.data_folder.is_local())
+            return read_np_from_file(
+                f, dtype=dup_dtype, is_local_file=self.data_folder.is_local()
+            )
 
     def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1):
         folders = self.data_folder.list_files(include_directories=True, recursive=False)
         # for performance reasons when having for instance 12k*10k files
         files = [
             f
-            for f in [f"{folder}/{rank:05d}{ExtensionHelperSD.stage_2_duplicates}" for folder in folders]
+            for f in [
+                f"{folder}/{rank:05d}{ExtensionHelperSD.stage_2_duplicates}"
+                for folder in folders
+            ]
             if self.data_folder.exists(f)
         ]
 
@@ -348,7 +387,10 @@ class UrlDedupFilter(PipelineStep):
                 for doc_idx, doc in enumerate(data):
                     self.stat_update(StatHints.total)
                     with self.stats.time_stats:
-                        if dups_doc_i < all_dups.shape[0] and all_dups[dups_doc_i] == doc_idx:
+                        if (
+                            dups_doc_i < all_dups.shape[0]
+                            and all_dups[dups_doc_i] == doc_idx
+                        ):
                             if writer:
                                 writer.write(doc, rank=rank)
                             self.stat_update(StatHints.dropped)
@@ -390,21 +432,35 @@ class UrlDedupBuildIndex(PipelineStep):
     def run(self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1):
         assert world_size == 1, "UrlDedupBuildIndex can only run on a single worker."
         with self.stats.time_stats:
-            sig_files = self.data_folder.list_files(glob_pattern=ExtensionHelperSD.stage_1_signature)
+            sig_files = self.data_folder.list_files(
+                glob_pattern=ExtensionHelperSD.stage_1_signature
+            )
             sig_readers = [
-                read_sigs(file, file_i, self.config.hash_config, lines_to_buffer=self.lines_to_buffer)
+                read_sigs(
+                    file,
+                    file_i,
+                    self.config.hash_config,
+                    lines_to_buffer=self.lines_to_buffer,
+                )
                 for file_i, file in enumerate(self.data_folder.open_files(sig_files))
             ]
 
             pq = [next(sig_reader) for sig_reader in sig_readers]
             heapq.heapify(pq)
 
-            with self.output_folder.open(f"{self.index_name}.{ExtensionHelperSD.index}", mode="wb") as out_f:
+            with self.output_folder.open(
+                f"{self.index_name}.{ExtensionHelperSD.index}", mode="wb"
+            ) as out_f:
                 last = None
                 while pq:
                     v: HashSig = heapq.heappop(pq)
                     if last != v.hash_value:
-                        out_f.write(struct.pack(f"<{self.config.hash_config.struct_format}", v.hash_value))
+                        out_f.write(
+                            struct.pack(
+                                f"<{self.config.hash_config.struct_format}",
+                                v.hash_value,
+                            )
+                        )
                     last = v.hash_value
                     new_v = next(sig_readers[v.file_id], None)
 

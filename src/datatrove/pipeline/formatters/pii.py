@@ -8,13 +8,20 @@ from datatrove.pipeline.formatters.base import BaseFormatter
 
 class PIIReplacer:
     def __init__(
-        self, regex: str, replacements: tuple[str, ...] | str, validator: Callable[[str], bool] | None = None
+        self,
+        regex: str,
+        replacements: tuple[str, ...] | str,
+        validator: Callable[[str], bool] | None = None,
     ):
         self.regex: re.Pattern = re.compile(regex)
         self.replacements = (
             replacements
             if type(replacements) is tuple
-            else (tuple(replacements) if not isinstance(replacements, str) else (replacements,))
+            else (
+                tuple(replacements)
+                if not isinstance(replacements, str)
+                else (replacements,)
+            )
         )
         self.validator = validator  # extra validation for a match
         self._replace_i = 0
@@ -58,9 +65,11 @@ class PIIFormatter(BaseFormatter):
         remove_ips: bool = True,
         only_remove_public_ips: bool = True,
         # example.com/org are actually maintained as an example
-        email_replacement: tuple[str, ...] | str = ("email@example.com", "firstname.lastname@example.org"),
+        email_replacement: tuple[str, ...]
+        | str = ("email@example.com", "firstname.lastname@example.org"),
         # randomly generated list of ips. they did not respond to ping requests at the time the list was created
-        ip_replacement: tuple[str, ...] | str = (
+        ip_replacement: tuple[str, ...]
+        | str = (
             "22.214.171.124",
             "126.96.36.199",
             "188.8.131.52",

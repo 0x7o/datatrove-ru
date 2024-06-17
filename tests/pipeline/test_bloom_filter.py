@@ -95,7 +95,9 @@ class BloomFilter(unittest.TestCase):
     def test_sd(self, hash_config):
         bloom_filter = SingleBloomFilter(
             output_folder=self.tmp_dir,
-            config=BloomFilterConfig(m_bytes=2**10 - 1, k=7, expected_elements=866, hash_config=hash_config),
+            config=BloomFilterConfig(
+                m_bytes=2**10 - 1, k=7, expected_elements=866, hash_config=hash_config
+            ),
         )
 
         for doc_idx, doc in enumerate(DOCS):

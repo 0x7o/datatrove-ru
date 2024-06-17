@@ -8,7 +8,11 @@ from datatrove.io import open_file
 
 parser = argparse.ArgumentParser("Loads a pickled pipeline executor and launches it.")
 
-parser.add_argument("path", type=str, help="Path to the pickled file (usually a file called executor.pik)")
+parser.add_argument(
+    "path",
+    type=str,
+    help="Path to the pickled file (usually a file called executor.pik)",
+)
 
 
 def main():

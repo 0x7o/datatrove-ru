@@ -70,7 +70,9 @@ class JsonlReader(BaseDiskReader):
                 for li, line in enumerate(f):
                     with self.track_time():
                         try:
-                            document = self.get_document_from_dict(json.loads(line), filepath, li)
+                            document = self.get_document_from_dict(
+                                json.loads(line), filepath, li
+                            )
                             if not document:
                                 continue
                         except (EOFError, JSONDecodeError) as e:
@@ -78,4 +80,6 @@ class JsonlReader(BaseDiskReader):
                             continue
                     yield document
             except UnicodeDecodeError as e:
-                logger.warning(f"File `{filepath}` may be corrupted: raised UnicodeDecodeError ({e})")
+                logger.warning(
+                    f"File `{filepath}` may be corrupted: raised UnicodeDecodeError ({e})"
+                )

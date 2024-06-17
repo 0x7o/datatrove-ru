@@ -10,7 +10,9 @@ class TestAdapterReader(unittest.TestCase):
     def test_adapter_reader(self):
         def custom_adapter(self, data, path, id_in_file):
             return {
-                "text": data[self.text_key] + "\n" + data["best_answer"],  # Example usage of self to access text_key
+                "text": data[self.text_key]
+                + "\n"
+                + data["best_answer"],  # Example usage of self to access text_key
                 "id": data.pop(self.id_key, f"{path}/{id_in_file}"),
             }
 

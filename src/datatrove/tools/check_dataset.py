@@ -11,8 +11,16 @@ from datatrove.utils.tokenization import load_tokenizer
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("data", type=str, help="path to folder with dataset to check", nargs="?", default=os.getcwd())
-parser.add_argument("-t", "--tokenizer", type=str, help="tokenizer to use", default="gpt2")
+parser.add_argument(
+    "data",
+    type=str,
+    help="path to folder with dataset to check",
+    nargs="?",
+    default=os.getcwd(),
+)
+parser.add_argument(
+    "-t", "--tokenizer", type=str, help="tokenizer to use", default="gpt2"
+)
 parser.add_argument("--eos", type=str, help="eos token", default="<|endoftext|>")
 
 """
@@ -48,12 +56,18 @@ def load_dataset_bytes(file, doc_ends, bytes_per_value: int = 2):
     with file as f:
         for start, end in zip([0] + doc_ends[:-1], doc_ends):
             data = f.read((end - start) * bytes_per_value)
-            assert len(data) == (end - start) * bytes_per_value, "Could not read correct number of bytes"
+            assert (
+                len(data) == (end - start) * bytes_per_value
+            ), "Could not read correct number of bytes"
             yield data
-        assert f.read(1) == b"", "Dataset should be exhausted but there is more data to read"
+        assert (
+            f.read(1) == b""
+        ), "Dataset should be exhausted but there is more data to read"
 
 
-def check_dataset(input_folder: DataFolder, tokenizer: str = "gpt2", eos_token: str = "<|endoftext|>"):
+def check_dataset(
+    input_folder: DataFolder, tokenizer: str = "gpt2", eos_token: str = "<|endoftext|>"
+):
     """
     Reads a dataset and checks if loss tokens match up to the corresponding doc ends files
     Args:
@@ -75,21 +89,29 @@ def check_dataset(input_folder: DataFolder, tokenizer: str = "gpt2", eos_token: 
     datafiles_index = input_folder.list_files(glob_pattern="*.ds.index")
     datafiles_loss = input_folder.list_files(glob_pattern="*.ds.loss")
     check_loss = not not datafiles_loss
-    assert len(datafiles) == len(datafiles_index) and (not check_loss or len(datafiles) == len(datafiles_loss)), (
-        "Mismatch between number of .ds, " ".ds.index and/or .ds.loss files"
-    )
+    assert len(datafiles) == len(datafiles_index) and (
+        not check_loss or len(datafiles) == len(datafiles_loss)
+    ), ("Mismatch between number of .ds, " ".ds.index and/or .ds.loss files")
 
     doc_ends = [load_doc_ends(open_file(file)) for file in datafiles_index]
-    token_inputs = [load_dataset_bytes(open_file(path), ends) for path, ends in zip(datafiles, doc_ends)]
+    token_inputs = [
+        load_dataset_bytes(open_file(path), ends)
+        for path, ends in zip(datafiles, doc_ends)
+    ]
     loss_inputs = (
-        [load_dataset_bytes(open_file(path), ends, bytes_per_value=1) for path, ends in zip(datafiles_loss, doc_ends)]
+        [
+            load_dataset_bytes(open_file(path), ends, bytes_per_value=1)
+            for path, ends in zip(datafiles_loss, doc_ends)
+        ]
         if check_loss
         else [None] * len(token_inputs)
     )
     for filei, (file_doc_ends, file_token_inputs, file_loss_inputs) in enumerate(
         zip(doc_ends, token_inputs, loss_inputs)
     ):
-        for doci, tokens in tqdm(enumerate(file_token_inputs), total=len(file_doc_ends)):
+        for doci, tokens in tqdm(
+            enumerate(file_token_inputs), total=len(file_doc_ends)
+        ):
             last_token = struct.unpack("<H", tokens[-2:])[0]
             assert last_token == eos_token, f"no EOS at doc end of doc {doci}"
 

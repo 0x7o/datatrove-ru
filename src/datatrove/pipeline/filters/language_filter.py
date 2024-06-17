@@ -5,7 +5,9 @@ from datatrove.pipeline.writers.disk_base import DiskWriter
 from datatrove.utils.typeshelper import Languages
 
 
-LANGUAGE_ID_MODEL_URL = "https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin"
+LANGUAGE_ID_MODEL_URL = (
+    "https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin"
+)
 
 
 class LanguageFilter(BaseFilter):
@@ -62,4 +64,6 @@ class LanguageFilter(BaseFilter):
         language = language[0].split("__")[2]
         doc.metadata["language"] = language
         doc.metadata["language_score"] = score[0]
-        return self.label_only or (score > self.language_threshold and language in self.languages)
+        return self.label_only or (
+            score > self.language_threshold and language in self.languages
+        )

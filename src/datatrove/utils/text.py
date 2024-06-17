@@ -8,10 +8,17 @@ from datatrove.utils.typeshelper import Languages
 from datatrove.utils.word_tokenizers import load_word_tokenizer
 
 
-PUNCTUATION = "!/—”:％１〈&(、━\\【#%「」，】；+^]~“《„';’{|∶´[=-`*．（–？！：$～«〉,><》)?）。…@_.\"}►»" + "".join(
-    map(
-        chr,
-        (x for a, b in ((0, 9), (11, 13), (13, 32), (127, 160)) for x in range(a, b)),
+PUNCTUATION = (
+    "!/—”:％１〈&(、━\\【#%「」，】；+^]~“《„';’{|∶´[=-`*．（–？！：$～«〉,><》)?）。…@_.\"}►»"
+    + "".join(
+        map(
+            chr,
+            (
+                x
+                for a, b in ((0, 9), (11, 13), (13, 32), (127, 160))
+                for x in range(a, b)
+            ),
+        )
     )
 )
 PUNCTUATION_SET = set(PUNCTUATION)
@@ -32,8 +39,12 @@ DEF_TEXT_NORM_CONFIG = TextNormConfig()
 NUMBERS_PATTERN = re.compile(r"\d+")
 WHITESPACE_PATTERN = re.compile(r"\s+")
 # WARNING: english specific
-WEEKDAYS_PATTERN = re.compile(r"monday|tuesday|wednesday|thursday|friday|saturday|sunday")
-MONTHS_PATTERN = re.compile(r"january|february|march|april|may|june|july|august|september|october|november|december")
+WEEKDAYS_PATTERN = re.compile(
+    r"monday|tuesday|wednesday|thursday|friday|saturday|sunday"
+)
+MONTHS_PATTERN = re.compile(
+    r"january|february|march|april|may|june|july|august|september|october|november|december"
+)
 
 
 def simplify_text(text: str, config=DEF_TEXT_NORM_CONFIG) -> str:
@@ -61,7 +72,11 @@ def simplify_text(text: str, config=DEF_TEXT_NORM_CONFIG) -> str:
         text = text.translate(str.maketrans("", "", PUNCTUATION))
     # diacritics/unicode normalization
     if config.norm_unicode_diacritics:
-        text = "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
+        text = "".join(
+            c
+            for c in unicodedata.normalize("NFD", text)
+            if unicodedata.category(c) != "Mn"
+        )
     if config.norm_numbers:
         text = NUMBERS_PATTERN.sub("0", text)
     if config.norm_weekdays:

@@ -113,7 +113,9 @@ class SlurmPipelineExecutor(PipelineExecutor):
         srun_args: dict = None,
         tasks_per_job: int = 1,
     ):
-        super().__init__(pipeline, logging_dir, skip_completed, randomize_start_duration)
+        super().__init__(
+            pipeline, logging_dir, skip_completed, randomize_start_duration
+        )
         self.tasks = tasks
         self.workers = workers
         self.partition = partition
@@ -160,10 +162,13 @@ class SlurmPipelineExecutor(PipelineExecutor):
         """
         if "SLURM_ARRAY_TASK_ID" in os.environ:
             # we are already "inside" the slurm task, get our rank from env vars and run pipeline
-            slurm_rank = int(os.environ["SLURM_ARRAY_TASK_ID"]) + self.max_array_size * int(
-                os.environ.get("RUN_OFFSET", 0)
+            slurm_rank = int(
+                os.environ["SLURM_ARRAY_TASK_ID"]
+            ) + self.max_array_size * int(os.environ.get("RUN_OFFSET", 0))
+            ranks_to_run_range = (
+                slurm_rank * self.tasks_per_job,
+                (slurm_rank + 1) * self.tasks_per_job,
             )
-            ranks_to_run_range = (slurm_rank * self.tasks_per_job, (slurm_rank + 1) * self.tasks_per_job)
             with self.logging_dir.open("ranks_to_run.json", "r") as ranks_to_run_file:
                 all_ranks = json.load(ranks_to_run_file)
             if ranks_to_run_range[0] >= len(all_ranks):
@@ -210,7 +215,10 @@ class SlurmPipelineExecutor(PipelineExecutor):
         """
         dependency = []
         if self.depends_job_id:
-            dependency.append(f"{'afterany' if self.run_on_dependency_fail else 'afterok'}:" f"{self.depends_job_id}")
+            dependency.append(
+                f"{'afterany' if self.run_on_dependency_fail else 'afterok'}:"
+                f"{self.depends_job_id}"
+            )
         if self.job_id and not self.max_array_launch_parallel:
             dependency.append(f"afterany:{self.job_id}")
         return ",".join(dependency)
@@ -235,7 +243,9 @@ class SlurmPipelineExecutor(PipelineExecutor):
 
         ranks_to_run = self.get_incomplete_ranks()
         if len(ranks_to_run) == 0:
-            logger.info(f"Skipping launch of {self.job_name} as all {self.tasks} tasks have already been completed.")
+            logger.info(
+                f"Skipping launch of {self.job_name} as all {self.tasks} tasks have already been completed."
+            )
             self.job_id = -1
             return
 
@@ -251,10 +261,18 @@ class SlurmPipelineExecutor(PipelineExecutor):
             json.dump(ranks_to_run, ranks_to_run_file)
 
         nb_jobs_to_launch = math.ceil(len(ranks_to_run) / self.tasks_per_job)
-        max_array = min(nb_jobs_to_launch, self.max_array_size) if self.max_array_size != -1 else nb_jobs_to_launch
+        max_array = (
+            min(nb_jobs_to_launch, self.max_array_size)
+            if self.max_array_size != -1
+            else nb_jobs_to_launch
+        )
 
         # create the actual sbatch script
-        srun_args_str = " ".join([f"--{k}={v}" for k, v in self.srun_args.items()]) if self.srun_args else ""
+        srun_args_str = (
+            " ".join([f"--{k}={v}" for k, v in self.srun_args.items()])
+            if self.srun_args
+            else ""
+        )
         launch_file_contents = self.get_launch_file_contents(
             self.get_sbatch_args(max_array),
             f"srun {srun_args_str} -l launch_pickled_pipeline {self.logging_dir.resolve_paths('executor.pik')}",
@@ -270,7 +288,11 @@ class SlurmPipelineExecutor(PipelineExecutor):
         # launch (possibly multiple) jobs
         launched_jobs = 0
         while launched_jobs * max_array < nb_jobs_to_launch:
-            if launched_jobs and self.max_array_launch_parallel and self.stagger_max_array_jobs > 0:
+            if (
+                launched_jobs
+                and self.max_array_launch_parallel
+                and self.stagger_max_array_jobs > 0
+            ):
                 time.sleep(self.stagger_max_array_jobs)
             args = [f"--export=ALL,RUN_OFFSET={launched_jobs}"]
             if self.dependency:
@@ -301,7 +323,11 @@ class SlurmPipelineExecutor(PipelineExecutor):
             "output": slurm_logfile,
             "error": slurm_logfile,
             "array": f"0-{max_array - 1}{f'%{self.workers}' if self.workers != -1 else ''}",
-            **({"mail-type": self.mail_type, "mail-user": self.mail_user} if self.mail_user else {}),
+            **(
+                {"mail-type": self.mail_type, "mail-user": self.mail_user}
+                if self.mail_user
+                else {}
+            ),
             **self._sbatch_args,
         }
         if self.requeue:
@@ -320,7 +346,12 @@ class SlurmPipelineExecutor(PipelineExecutor):
         Returns:
 
         """
-        args = "\n".join([f"#SBATCH --{k}={v}" if v else f"#SBATCH --{k}" for k, v in sbatch_args.items()])
+        args = "\n".join(
+            [
+                f"#SBATCH --{k}={v}" if v else f"#SBATCH --{k}"
+                for k, v in sbatch_args.items()
+            ]
+        )
 
         env_command = (
             self.env_command
@@ -366,4 +397,8 @@ def launch_slurm_job(launch_file_contents, *args):
     with tempfile.NamedTemporaryFile("w") as f:
         f.write(launch_file_contents)
         f.flush()
-        return subprocess.check_output(["sbatch", *args, f.name]).decode("utf-8").split()[-1]
+        return (
+            subprocess.check_output(["sbatch", *args, f.name])
+            .decode("utf-8")
+            .split()[-1]
+        )

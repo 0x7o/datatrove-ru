@@ -54,7 +54,9 @@ class FastTextClassifierFilter(BaseFilter):
         self.remove_labels = remove_labels
         self.filter_mode = filter_mode
         if keep_labels and remove_labels:
-            raise ValueError("You can only supply one of `keep_labels` or `remove_labels`.")
+            raise ValueError(
+                "You can only supply one of `keep_labels` or `remove_labels`."
+            )
         self.newline_replacement = newline_replacement
         if keep_labels and isinstance(keep_labels[0], str):
             self.keep_labels = [keep_labels]
@@ -69,7 +71,10 @@ class FastTextClassifierFilter(BaseFilter):
             from fasttext.FastText import _FastText
 
             model_file = cached_asset_path_or_download(
-                self.model_url, namespace="filters", subfolder="fasttext", desc="fast-text model"
+                self.model_url,
+                namespace="filters",
+                subfolder="fasttext",
+                desc="fast-text model",
             )
             self._model = _FastText(model_file)
             # check label values
@@ -86,18 +91,22 @@ class FastTextClassifierFilter(BaseFilter):
         def check_label_scores(unit_scores):
             if self.keep_labels:
                 return any(
-                    unit_scores.get(f"__label__{label}", -9e9) >= min_score for label, min_score in self.keep_labels
+                    unit_scores.get(f"__label__{label}", -9e9) >= min_score
+                    for label, min_score in self.keep_labels
                 )
             else:
                 return not self.remove_labels or not any(
-                    unit_scores.get(f"__label__{label}", -9e9) >= min_score for label, min_score in self.remove_labels
+                    unit_scores.get(f"__label__{label}", -9e9) >= min_score
+                    for label, min_score in self.remove_labels
                 )
 
         units = split_into_parts(doc.text, mode=self.filter_mode)
         kept_spans = []
         label_scores = defaultdict(list)
         for unit in units:
-            labels, scores = self.model.predict(unit.strip().replace("\n", self.newline_replacement), k=-1)
+            labels, scores = self.model.predict(
+                unit.strip().replace("\n", self.newline_replacement), k=-1
+            )
             if self.save_labels_in_metadata:
                 for label, score in zip(labels, scores):
                     label_scores[label].append(score)
@@ -108,5 +117,10 @@ class FastTextClassifierFilter(BaseFilter):
                 self.stat_update("removed_span")
         doc.text = "".join(kept_spans)
         if self.save_labels_in_metadata:
-            doc.metadata.update({label: np.mean(scores).item() for label, scores in label_scores.items()})
+            doc.metadata.update(
+                {
+                    label: np.mean(scores).item()
+                    for label, scores in label_scores.items()
+                }
+            )
         return not not doc.text.strip()

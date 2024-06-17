@@ -16,13 +16,27 @@ if not is_rich_available():
 parser = argparse.ArgumentParser("Fetch all jobs that are running or complete.")
 
 parser.add_argument(
-    "path", type=str, nargs="?", help="Path to the logging folder. Defaults to current directory.", default=os.getcwd()
+    "path",
+    type=str,
+    nargs="?",
+    help="Path to the logging folder. Defaults to current directory.",
+    default=os.getcwd(),
 )
 
 parser.add_argument(
-    "-p", "--log_prefix", type=str, nargs="?", help="Prefix of logging folders to be scanned.", default=""
+    "-p",
+    "--log_prefix",
+    type=str,
+    nargs="?",
+    help="Prefix of logging folders to be scanned.",
+    default="",
 )
-parser.add_argument("-hc", "--hide_complete", help="Hide all jobs that are already complete.", action="store_true")
+parser.add_argument(
+    "-hc",
+    "--hide_complete",
+    help="Hide all jobs that are already complete.",
+    action="store_true",
+)
 
 
 def main():
@@ -37,7 +51,9 @@ def main():
     main_folder = get_datafolder(args.path)
     logging_dirs = [
         f
-        for f, info in main_folder.glob(f"{args.log_prefix}*", detail=True, maxdepth=1).items()
+        for f, info in main_folder.glob(
+            f"{args.log_prefix}*", detail=True, maxdepth=1
+        ).items()
         if info["type"] == "directory"
     ]
     logger.remove()
@@ -65,7 +81,12 @@ def main():
 
         with console.status("Fetching list of incomplete tasks"):
             completed = set(logging_dir.list_files("completions"))
-            incomplete = set(filter(lambda rank: f"completions/{rank:05d}" not in completed, range(world_size)))
+            incomplete = set(
+                filter(
+                    lambda rank: f"completions/{rank:05d}" not in completed,
+                    range(world_size),
+                )
+            )
 
         if len(incomplete) == 0:
             emoji = "✅"

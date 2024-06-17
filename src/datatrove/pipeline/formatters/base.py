@@ -15,7 +15,9 @@ class BaseFormatter(PipelineStep, ABC):
     def format(self, text: str) -> str:
         return text
 
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         for doc in data:
             self.stat_update(StatHints.total)
             with self.track_time():

@@ -36,7 +36,11 @@ class PipelineStepWithTokenizer(PipelineStep, ABC):
     @property
     def token_size(self) -> int:
         if not self._token_size:
-            self._token_size = 4 if self.tokenizer.get_vocab_size() > np.iinfo(np.uint16).max + 1 else 2
+            self._token_size = (
+                4
+                if self.tokenizer.get_vocab_size() > np.iinfo(np.uint16).max + 1
+                else 2
+            )
         return self._token_size
 
     @property
@@ -54,7 +58,9 @@ class PipelineStepWithTokenizer(PipelineStep, ABC):
             elif self.eos_token:
                 self._tokenizer.post_processor = TemplateProcessing(
                     single="$A <EOS>",
-                    special_tokens=[("<EOS>", self.tokenizer.token_to_id(self.eos_token))],
+                    special_tokens=[
+                        ("<EOS>", self.tokenizer.token_to_id(self.eos_token))
+                    ],
                     pair=None,
                 )
         return self._tokenizer

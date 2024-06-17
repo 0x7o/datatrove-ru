@@ -45,9 +45,13 @@ class DiskWriter(PipelineStep, ABC):
         self.max_file_size = max_file_size
         self.file_id_counter = Counter()
         if self.max_file_size > 0 and mode != "wb":
-            raise ValueError("Can only specify `max_file_size` when writing in binary mode!")
+            raise ValueError(
+                "Can only specify `max_file_size` when writing in binary mode!"
+            )
         self.output_filename = Template(output_filename)
-        self.output_mg = self.output_folder.get_output_file_manager(mode=mode, compression=compression)
+        self.output_mg = self.output_folder.get_output_file_manager(
+            mode=mode, compression=compression
+        )
         self.adapter = MethodType(adapter, self) if adapter else self._default_adapter
         self.expand_metadata = expand_metadata
 
@@ -74,7 +78,9 @@ class DiskWriter(PipelineStep, ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def _get_output_filename(self, document: Document, rank: int | str = 0, **kwargs) -> str:
+    def _get_output_filename(
+        self, document: Document, rank: int | str = 0, **kwargs
+    ) -> str:
         """
             Get the output path for a given document, based on any possible tag replacement.
             Example filename with `rank` tag: "${rank}.jsonl.gz"
@@ -92,7 +98,12 @@ class DiskWriter(PipelineStep, ABC):
 
         """
         return self.output_filename.substitute(
-            {"rank": str(rank).zfill(5), "id": document.id, **document.metadata, **kwargs}
+            {
+                "rank": str(rank).zfill(5),
+                "id": document.id,
+                **document.metadata,
+                **kwargs,
+            }
         )
 
     @abstractmethod
@@ -142,7 +153,9 @@ class DiskWriter(PipelineStep, ABC):
         Returns:
 
         """
-        original_name = output_filename = self._get_output_filename(document, rank, **kwargs)
+        original_name = output_filename = self._get_output_filename(
+            document, rank, **kwargs
+        )
         # we possibly have to change file
         if self.max_file_size > 0:
             # get size of current file
@@ -151,15 +164,23 @@ class DiskWriter(PipelineStep, ABC):
             if self.output_mg.get_file(output_filename).tell() >= self.max_file_size:
                 self.file_id_counter[original_name] += 1
                 new_output_filename = self._get_filename_with_file_id(original_name)
-                self._on_file_switch(original_name, output_filename, new_output_filename)
+                self._on_file_switch(
+                    original_name, output_filename, new_output_filename
+                )
                 output_filename = new_output_filename
         # actually write
-        self._write(self.adapter(document), self.output_mg.get_file(output_filename), original_name)
+        self._write(
+            self.adapter(document),
+            self.output_mg.get_file(output_filename),
+            original_name,
+        )
         self.stat_update(self._get_output_filename(document, "XXXXX", **kwargs))
         self.stat_update(StatHints.total)
         self.update_doc_stats(document)
 
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """
         Simply call `write` for each document
         Args:

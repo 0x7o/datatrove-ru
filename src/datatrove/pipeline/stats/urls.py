@@ -36,14 +36,18 @@ class URLStats(PipelineStep):
         self.topk = topk
         self.min_doc_count_to_save = min_doc_count_to_save
 
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         doc_counter = MetricStatsDict()
         tokens_counter = MetricStatsDict()
         total_docs = 0
         total_tokens = 0
         if self.input_folder:
             # reduce the map results
-            assert world_size == 1, "world_size must be 1 when getting the input from an input_folder"
+            assert (
+                world_size == 1
+            ), "world_size must be 1 when getting the input from an input_folder"
             for file in self.input_folder.list_files(glob_pattern="json"):
                 with self.input_folder.open(file, "rt") as f:
                     file_data = json.load(f)
@@ -74,7 +78,8 @@ class URLStats(PipelineStep):
                     if url in tokens_counter:
                         del tokens_counter[url]
         with self.output_folder.open(
-            f"{rank:05d}_url_stats.json" if not self.input_folder else "url_stats.json", "wt"
+            f"{rank:05d}_url_stats.json" if not self.input_folder else "url_stats.json",
+            "wt",
         ) as f:
             json.dump(
                 {

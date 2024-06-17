@@ -27,7 +27,11 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    "path", type=str, nargs="?", help="Path to the data folder. Defaults to current directory.", default=os.getcwd()
+    "path",
+    type=str,
+    nargs="?",
+    help="Path to the data folder. Defaults to current directory.",
+    default=os.getcwd(),
 )
 
 parser.add_argument(
@@ -40,11 +44,19 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "-s", "--sample", type=float, help="Randomly sample a given % of samples. 1.0 to see all samples", default=1.0
+    "-s",
+    "--sample",
+    type=float,
+    help="Randomly sample a given % of samples. 1.0 to see all samples",
+    default=1.0,
 )
 
 parser.add_argument(
-    "-l", "--label", type=str, help="Label the examples as good/bad and store at this location", default=""
+    "-l",
+    "--label",
+    type=str,
+    help="Label the examples as good/bad and store at this location",
+    default="",
 )
 
 console = Console()
@@ -92,7 +104,9 @@ def reader_factory(data_folder: DataFolder, reader_type: str = None, **kwargs):
             case ".warc.gz" | "arc.gz" | ".warc":
                 reader_type = "warc"
             case other:
-                console.log(f'[red]Could not find a matching reader for file extension "{other}"')
+                console.log(
+                    f'[red]Could not find a matching reader for file extension "{other}"'
+                )
                 sys.exit(-1)
     return reader_class_from_name(reader_type)(data_folder, **kwargs)
 
@@ -128,9 +142,12 @@ def main():
 
     filter_expr_text = None
     if Confirm.ask(
-        "Would you like to add a filtering expression? (ex: x.metadata['token_count'] > 5000)", default=False
+        "Would you like to add a filtering expression? (ex: x.metadata['token_count'] > 5000)",
+        default=False,
     ):
-        filter_expr_text = Confirm.get_input(console, "Type your filtering expression: ", password=False)
+        filter_expr_text = Confirm.get_input(
+            console, "Type your filtering expression: ", password=False
+        )
     filter_expr = get_filter_expr(filter_expr_text)
 
     good_samples = []
@@ -145,7 +162,10 @@ def main():
                     Panel(
                         f"[yellow]Data ID:[reset] {sample.id}\n"
                         f"[yellow]Metadata:[reset]\n"
-                        + "\n".join(f"- [blue]{field}: [reset] {value}" for field, value in sample.metadata.items())
+                        + "\n".join(
+                            f"- [blue]{field}: [reset] {value}"
+                            for field, value in sample.metadata.items()
+                        )
                     )
                 )
                 console.print(sample.text)
@@ -166,11 +186,15 @@ def main():
         console.print_exception()
     finally:
         if good_samples and label_folder:
-            with JsonlWriter(label_folder, "good_samples.jsonl", compression=None) as writer:
+            with JsonlWriter(
+                label_folder, "good_samples.jsonl", compression=None
+            ) as writer:
                 for sample in good_samples:
                     writer.write(sample)
         if bad_samples and label_folder:
-            with JsonlWriter(label_folder, "bad_samples.jsonl", compression=None) as writer:
+            with JsonlWriter(
+                label_folder, "bad_samples.jsonl", compression=None
+            ) as writer:
                 for sample in bad_samples:
                     writer.write(sample)
 

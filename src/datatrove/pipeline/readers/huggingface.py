@@ -80,12 +80,16 @@ class HuggingFaceDatasetReader(BaseReader):
             # If we have just a single shard/file, we shard inter-file
             return split_dataset_by_node(dst, rank, world_size)
 
-    def run(self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         from datasets import load_dataset  # type: ignore
 
         if data:
             yield from data
-        ds = load_dataset(self.dataset, **self.dataset_options, streaming=self.streaming)
+        ds = load_dataset(
+            self.dataset, **self.dataset_options, streaming=self.streaming
+        )
 
         # In case the dataset is (Iterable)?DatasetDict, raise informative error
         if isinstance(ds, dict):
@@ -94,7 +98,10 @@ class HuggingFaceDatasetReader(BaseReader):
             )
 
         shard = self._get_dataset_shard(ds, rank, world_size)
-        with tqdm(total=self.limit if self.limit != -1 else None, disable=not self.doc_progress) as pbar:
+        with tqdm(
+            total=self.limit if self.limit != -1 else None,
+            disable=not self.doc_progress,
+        ) as pbar:
             li = 0
             for batch in shard.iter(self.batch_size):
                 if self.limit != -1 and li >= self.limit:
@@ -104,7 +111,9 @@ class HuggingFaceDatasetReader(BaseReader):
                     for line in (dict(zip(batch, t)) for t in zip(*batch.values())):
                         if self.limit != -1 and li >= self.limit:
                             break
-                        document = self.get_document_from_dict(line, self.dataset, f"{rank:05d}/{li}")
+                        document = self.get_document_from_dict(
+                            line, self.dataset, f"{rank:05d}/{li}"
+                        )
                         if not document:
                             continue
                         documents.append(document)

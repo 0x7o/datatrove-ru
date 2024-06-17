@@ -41,7 +41,9 @@ class PipelineExecutor(ABC):
         randomize_start_duration: int = 0,
     ):
         self.pipeline: list[PipelineStep | Callable] = pipeline
-        self.logging_dir = get_datafolder(logging_dir if logging_dir else f"logs/{get_timestamp()}_{get_random_str()}")
+        self.logging_dir = get_datafolder(
+            logging_dir if logging_dir else f"logs/{get_timestamp()}_{get_random_str()}"
+        )
         self.skip_completed = skip_completed
         self.randomize_start_duration = randomize_start_duration
 
@@ -87,8 +89,12 @@ class PipelineExecutor(ABC):
             pipelined_data = None
             for pipeline_step in self.pipeline:
                 if callable(pipeline_step):
-                    pipelined_data = pipeline_step(pipelined_data, rank, self.world_size)
-                elif isinstance(pipeline_step, Sequence) and not isinstance(pipeline_step, str):
+                    pipelined_data = pipeline_step(
+                        pipelined_data, rank, self.world_size
+                    )
+                elif isinstance(pipeline_step, Sequence) and not isinstance(
+                    pipeline_step, str
+                ):
                     pipelined_data = pipeline_step
                 else:
                     raise ValueError
@@ -120,7 +126,9 @@ class PipelineExecutor(ABC):
         Returns: whether task is already completed. If `skip_completed=False`, will always return `False`.
 
         """
-        return self.skip_completed and self.logging_dir.isfile(f"completions/{rank:05d}")
+        return self.skip_completed and self.logging_dir.isfile(
+            f"completions/{rank:05d}"
+        )
 
     def mark_rank_as_completed(self, rank: int):
         """
@@ -144,7 +152,8 @@ class PipelineExecutor(ABC):
         completed = set(self.logging_dir.list_files("completions"))
         return list(
             filter(
-                lambda rank: not self.skip_completed or f"completions/{rank:05d}" not in completed,
+                lambda rank: not self.skip_completed
+                or f"completions/{rank:05d}" not in completed,
                 ranks if ranks is not None else range(self.world_size),
             )
         )
@@ -159,7 +168,10 @@ class PipelineExecutor(ABC):
 
         """
         data = self.__dict__
-        data["pipeline"] = [{a: b for a, b in x.__dict__.items() if a != "stats"} for x in data["pipeline"]]
+        data["pipeline"] = [
+            {a: b for a, b in x.__dict__.items() if a != "stats"}
+            for x in data["pipeline"]
+        ]
         return json.dumps(data, indent=indent)
 
     def save_executor_as_json(self, indent: int = 4):

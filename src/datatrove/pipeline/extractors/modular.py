@@ -18,10 +18,19 @@ class ReadabilityInscriptis(BaseExtractor):
 
     _requires_dependencies = [
         "inscriptis",
-        ("readability", "readability-lxml @ git+https://github.com/huggingface/python-readability.git@speedup"),
+        (
+            "readability",
+            "readability-lxml @ git+https://github.com/huggingface/python-readability.git@speedup",
+        ),
     ]
 
-    def __init__(self, max_new_lines: int = 2, min_text_length=25, min_text_score=20, timeout: float = 0.1):
+    def __init__(
+        self,
+        max_new_lines: int = 2,
+        min_text_length=25,
+        min_text_score=20,
+        timeout: float = 0.1,
+    ):
         from inscriptis.css_profiles import CSS_PROFILES
         from inscriptis.model.config import ParserConfig
 
@@ -44,7 +53,11 @@ class ReadabilityInscriptis(BaseExtractor):
         from inscriptis import get_text
         from readability import Document as _Document
 
-        parsed_doc = _Document(text, min_text_length=self.min_text_length, min_text_score=self.min_text_score)
+        parsed_doc = _Document(
+            text,
+            min_text_length=self.min_text_length,
+            min_text_score=self.min_text_score,
+        )
         clean_html = parsed_doc.summary(html_partial=True)
         text = get_text(clean_html, self._parser_config).strip()
         # remove excessive empty lines

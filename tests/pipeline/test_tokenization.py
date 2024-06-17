@@ -34,20 +34,25 @@ TEXTS = [
 
 TOKENIZER = "gpt2"
 WORKERS = 3
-DATA = np.array_split([Document(text=text, id=id) for id, text in enumerate(TEXTS)], WORKERS)
+DATA = np.array_split(
+    [Document(text=text, id=id) for id, text in enumerate(TEXTS)], WORKERS
+)
 
 
 def get_texts_from_tokens(input_folder: DataFolder):
     tokenizer = Tokenizer.from_pretrained(TOKENIZER)
     texts_from_tokens = []
     for tokens_file, index_file in zip(
-        input_folder.list_files(glob_pattern="*.ds"), input_folder.list_files(glob_pattern="*.ds.index")
+        input_folder.list_files(glob_pattern="*.ds"),
+        input_folder.list_files(glob_pattern="*.ds.index"),
     ):
         doc_ends = load_doc_ends(input_folder.open(index_file, "rb"))
         with input_folder.open(tokens_file, "rb") as f:
             for start, end in zip([0] + doc_ends[:-1], doc_ends):
                 texts_from_tokens.append(
-                    tokenizer.decode(struct.unpack("<%sH" % (end - start), f.read((end - start) * 2)))
+                    tokenizer.decode(
+                        struct.unpack("<%sH" % (end - start), f.read((end - start) * 2))
+                    )
                 )
     return texts_from_tokens
 
@@ -69,7 +74,10 @@ class TestTokenization(unittest.TestCase):
     def test_tokenizer(self):
         for sub_test, args in [
             ("tokenizer_unshuffled", (None, None, None)),
-            ("tokenizer_shuffled", (7383, [2, 0, 1, 4, 3, 5, 7, 6], [2, 4, 7, 0, 3, 1, 6, 5])),
+            (
+                "tokenizer_shuffled",
+                (7383, [2, 0, 1, 4, 3, 5, 7, 6], [2, 4, 7, 0, 3, 1, 6, 5]),
+            ),
         ]:
             with self.subTest(sub_test):
                 seed, dist_mapping, merge_mapping = args
@@ -78,7 +86,11 @@ class TestTokenization(unittest.TestCase):
                 MERGED_DIR = os.path.join(self.tmp_dir, sub_test, "merged")
 
                 document_tokenizer = DocumentTokenizer(
-                    TOKENS_DIR, local_working_dir=None, shuffle=seed is not None, seed=seed, save_loss_metadata=True
+                    TOKENS_DIR,
+                    local_working_dir=None,
+                    shuffle=seed is not None,
+                    seed=seed,
+                    save_loss_metadata=True,
                 )
                 for worker, worker_data in enumerate(DATA):
                     document_tokenizer(worker_data, rank=worker, world_size=WORKERS)

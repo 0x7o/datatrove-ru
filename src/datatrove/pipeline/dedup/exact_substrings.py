@@ -35,7 +35,13 @@ SEPARATOR_BYTES = 12
 def prepare_doc(tokenizer, doc: str, rank: int, doc_id: int):
     tokens = tokenizer.encode(doc).ids
     tokens = np.fromiter(tokens, dtype=np.uint16, count=len(tokens))
-    b_doc = b"\xff\xff" + struct.pack("<I", doc_id) + b"\xff\xff" + struct.pack("<I", rank) + tokens.tobytes()
+    b_doc = (
+        b"\xff\xff"
+        + struct.pack("<I", doc_id)
+        + b"\xff\xff"
+        + struct.pack("<I", rank)
+        + tokens.tobytes()
+    )
     return b_doc
 
 
@@ -52,7 +58,9 @@ class ESDatasetToSequence(PipelineStepWithTokenizer):
     type = "🫂 - DEDUP"
     name = "🪞 - exact-substrings stage 1"
 
-    def __init__(self, output_folder: DataFolderLike, tokenizer_name_or_path: str = "gpt2"):
+    def __init__(
+        self, output_folder: DataFolderLike, tokenizer_name_or_path: str = "gpt2"
+    ):
         super().__init__()
         self.output_folder = get_datafolder(output_folder)
         self.tokenizer_name_or_path = tokenizer_name_or_path
@@ -64,16 +72,22 @@ class ESDatasetToSequence(PipelineStepWithTokenizer):
             doc_lens: list of sizes of each doc
             rank: rank of the process
         """
-        with self.output_folder.open(f"{rank:05d}{EH.stage_1_sequence_size}", mode="wb") as f_lens:
+        with self.output_folder.open(
+            f"{rank:05d}{EH.stage_1_sequence_size}", mode="wb"
+        ) as f_lens:
             f_lens.write(struct.pack("Q" * len(doc_lens), *doc_lens))
 
     def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1):
         doc_lens = []
-        with self.output_folder.open(f"{rank:05d}{EH.stage_1_sequence}", mode="wb") as f_sequence:
+        with self.output_folder.open(
+            f"{rank:05d}{EH.stage_1_sequence}", mode="wb"
+        ) as f_sequence:
             i = -1
             for i, doc in enumerate(data):
                 with self.stats.time_stats:
-                    b_doc = prepare_doc(tokenizer=self.tokenizer, doc=doc.text, rank=rank, doc_id=i)
+                    b_doc = prepare_doc(
+                        tokenizer=self.tokenizer, doc=doc.text, rank=rank, doc_id=i
+                    )
                     doc_lens.append(len(b_doc))
                     f_sequence.write(b_doc)
 
@@ -112,9 +126,13 @@ class ESMergeSequences(PipelineStep):
         bytes_per_sequence = [0]
         with self.stats.time_stats:
             assert world_size == 1, f"{world_size=} can't be greater than 1!"
-            all_files: list[str] = self.data_folder.list_files(glob_pattern=EH.stage_1_sequence)
+            all_files: list[str] = self.data_folder.list_files(
+                glob_pattern=EH.stage_1_sequence
+            )
             assert len(all_files) == self.tasks_stage_1
-            with self.data_folder.open(f"dataset{EH.stage_2_big_sequence}", mode="wb") as f_sequence:
+            with self.data_folder.open(
+                f"dataset{EH.stage_2_big_sequence}", mode="wb"
+            ) as f_sequence:
                 for file in all_files:
                     len_sequence = 0
                     with self.data_folder.open(file, "rb") as f:
@@ -126,7 +144,9 @@ class ESMergeSequences(PipelineStep):
                                 break
                         bytes_per_sequence.append(bytes_per_sequence[-1] + len_sequence)
 
-                with self.data_folder.open(f"bytes_offsets{EH.stage_2_bytes_offset}", mode="wb") as f_bytes:
+                with self.data_folder.open(
+                    f"bytes_offsets{EH.stage_2_bytes_offset}", mode="wb"
+                ) as f_bytes:
                     f_bytes.write(np.array([bytes_per_sequence], np.uint32).tobytes())
 
 
@@ -180,7 +200,9 @@ class ESRangeRemover(PipelineStepWithTokenizer):
         self.rank = None
 
     def get_sequence_bytes_offset(self):
-        offset_array_file: str = self.sequence_folder.list_files(glob_pattern=EH.stage_2_bytes_offset)[0]
+        offset_array_file: str = self.sequence_folder.list_files(
+            glob_pattern=EH.stage_2_bytes_offset
+        )[0]
         with self.sequence_folder.open(offset_array_file, "rb") as f:
             offset_array = f.read()
         self.sequence_bytes_offset = np.frombuffer(offset_array, dtype=np.uint32)
@@ -206,20 +228,37 @@ class ESRangeRemover(PipelineStepWithTokenizer):
             if b > self.sequence_bytes_offset[self.rank + 1] + SEPARATOR_BYTES:
                 break
             if b > self.sequence_bytes_offset[self.rank] + SEPARATOR_BYTES:
-                a, b = a - self.sequence_bytes_offset[self.rank], b - self.sequence_bytes_offset[self.rank]
+                a, b = (
+                    a - self.sequence_bytes_offset[self.rank],
+                    b - self.sequence_bytes_offset[self.rank],
+                )
                 rank_dup_ranges.append((a, b))
         self.dup_ranges = rank_dup_ranges
 
     def get_all_files(self, rank: int, world_size: int):
         self.get_sequence_bytes_offset()
-        sequence_file = self.sequence_folder.get_shard(rank, world_size, glob_pattern=EH.stage_1_sequence)
-        docs_sizes_file = self.sequence_folder.get_shard(rank, world_size, glob_pattern=EH.stage_1_sequence_size)
-        byte_range_file = self.sequence_folder.list_files(glob_pattern=EH.stage_3_bytes_ranges)
+        sequence_file = self.sequence_folder.get_shard(
+            rank, world_size, glob_pattern=EH.stage_1_sequence
+        )
+        docs_sizes_file = self.sequence_folder.get_shard(
+            rank, world_size, glob_pattern=EH.stage_1_sequence_size
+        )
+        byte_range_file = self.sequence_folder.list_files(
+            glob_pattern=EH.stage_3_bytes_ranges
+        )
 
         assert all(
-            [len(sequence_file) == 1, len(docs_sizes_file) == 1, len(byte_range_file) == 1]
+            [
+                len(sequence_file) == 1,
+                len(docs_sizes_file) == 1,
+                len(byte_range_file) == 1,
+            ]
         ), f"Need to run with n_tasks = n_files. {len(sequence_file)=}, {len(sequence_file)=}, {len(byte_range_file)=}"
-        sequence_file, docs_sizes_file, byte_range_file = sequence_file[0], docs_sizes_file[0], byte_range_file[0]
+        sequence_file, docs_sizes_file, byte_range_file = (
+            sequence_file[0],
+            docs_sizes_file[0],
+            byte_range_file[0],
+        )
 
         self.get_bytearange(self.sequence_folder.open(byte_range_file, "rt"))
         return sequence_file, docs_sizes_file
@@ -259,17 +298,28 @@ class ESRangeRemover(PipelineStepWithTokenizer):
             return ranges
 
         while True:
-            a, b = self.dup_ranges[self.range_idx][0], self.dup_ranges[self.range_idx][1]
+            a, b = (
+                self.dup_ranges[self.range_idx][0],
+                self.dup_ranges[self.range_idx][1],
+            )
 
-            left = a < self.bytes_counter and self.bytes_counter + SEPARATOR_BYTES < b <= upper_limit
+            left = (
+                a < self.bytes_counter
+                and self.bytes_counter + SEPARATOR_BYTES < b <= upper_limit
+            )
             centre = self.bytes_counter <= a < b <= upper_limit
-            right = self.bytes_counter <= a < upper_limit - SEPARATOR_BYTES and upper_limit < b
+            right = (
+                self.bytes_counter <= a < upper_limit - SEPARATOR_BYTES
+                and upper_limit < b
+            )
             outside = a < self.bytes_counter < upper_limit < b
 
             if not any([left, centre, right, outside]):
                 break
 
-            assert sum([left, centre, right, outside]) == 1, f"{left=}, {centre=}, {right=}, {outside=}"
+            assert (
+                sum([left, centre, right, outside]) == 1
+            ), f"{left=}, {centre=}, {right=}, {outside=}"
 
             if left:
                 self.range_idx += 1
@@ -280,7 +330,9 @@ class ESRangeRemover(PipelineStepWithTokenizer):
                 ranges.append(self.normalize_range(a, upper_limit, bytes_len))
                 break
             if outside:
-                ranges.append(self.normalize_range(self.bytes_counter, upper_limit, bytes_len))
+                ranges.append(
+                    self.normalize_range(self.bytes_counter, upper_limit, bytes_len)
+                )
                 break
 
             ranges.append(self.normalize_range(a, b, bytes_len))
@@ -296,7 +348,9 @@ class ESRangeRemover(PipelineStepWithTokenizer):
         duplicates_ranges = self.get_duplicate_range(n_bytes)
         duplicates = []
         for byte_a, byte_b in duplicates_ranges:
-            dup_sentence = self.tokenizer.decode(np.frombuffer(bytes_content[byte_a:byte_b], dtype=np.uint16).tolist())
+            dup_sentence = self.tokenizer.decode(
+                np.frombuffer(bytes_content[byte_a:byte_b], dtype=np.uint16).tolist()
+            )
             duplicates.append(dup_sentence)
 
         if duplicates:
@@ -313,18 +367,23 @@ class ESRangeRemover(PipelineStepWithTokenizer):
 
         return True
 
-    def run(self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         self.reset()
         self.rank = rank
         # loads the sequence file from stage 1, the size file from stage 1 and the bytearange file.
-        sequence_file, size_file = self.get_all_files(rank=self.rank, world_size=world_size)
+        sequence_file, size_file = self.get_all_files(
+            rank=self.rank, world_size=world_size
+        )
         if not self.dup_ranges:
             return
         # data is still useful for the metadata lost in the sequence format.
         for doc, doc_content in zip(
             data,
             sequence_reader(
-                self.sequence_folder.open(sequence_file, "rb"), self.sequence_folder.open(size_file, "rb")
+                self.sequence_folder.open(sequence_file, "rb"),
+                self.sequence_folder.open(size_file, "rb"),
             ),
         ):
             with self.stats.time_stats:
@@ -338,7 +397,10 @@ class ESRangeRemover(PipelineStepWithTokenizer):
                 yield doc
 
         # we check bytes counter matches with the offset of the following rank
-        assert self.bytes_counter == self.sequence_bytes_offset[rank + 1] - self.sequence_bytes_offset[rank], (
+        assert (
+            self.bytes_counter
+            == self.sequence_bytes_offset[rank + 1] - self.sequence_bytes_offset[rank]
+        ), (
             f"got {self.bytes_counter=}, expected = "
             f"{self.sequence_bytes_offset[rank + 1] - self.sequence_bytes_offset[rank]}"
         )

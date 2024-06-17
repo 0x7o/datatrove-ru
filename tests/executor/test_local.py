@@ -5,12 +5,20 @@ import unittest
 
 from datatrove.executor.local import LocalPipelineExecutor
 from datatrove.io import get_datafolder
-from datatrove.utils._import_utils import is_boto3_available, is_moto_available, is_s3fs_available
+from datatrove.utils._import_utils import (
+    is_boto3_available,
+    is_moto_available,
+    is_s3fs_available,
+)
 
 from ..utils import require_boto3, require_moto, require_s3fs
 
 
-EXAMPLE_DIRS = ("/home/testuser/somedir", "file:///home/testuser2/somedir", "s3://test-bucket/somedir")
+EXAMPLE_DIRS = (
+    "/home/testuser/somedir",
+    "file:///home/testuser2/somedir",
+    "s3://test-bucket/somedir",
+)
 FULL_PATHS = (
     "/home/testuser/somedir/file.txt",
     "/home/testuser2/somedir/file.txt",
@@ -56,12 +64,21 @@ class TestLocalExecutor(unittest.TestCase):
         ] + [
             x
             for rank in range(3)
-            for x in (f"completions/{rank:05d}", f"logs/task_{rank:05d}.log", f"stats/{rank:05d}.json")
+            for x in (
+                f"completions/{rank:05d}",
+                f"logs/task_{rank:05d}.log",
+                f"stats/{rank:05d}.json",
+            )
         ]
         for tasks, workers in configurations:
-            for log_dir in (f"{self.tmp_dir}/{tasks}_{workers}", (f"s3://test-bucket/logs/{tasks}_{workers}", s3fs)):
+            for log_dir in (
+                f"{self.tmp_dir}/{tasks}_{workers}",
+                (f"s3://test-bucket/logs/{tasks}_{workers}", s3fs),
+            ):
                 log_dir = get_datafolder(log_dir)
-                executor = LocalPipelineExecutor(pipeline=[], tasks=tasks, workers=workers, logging_dir=log_dir)
+                executor = LocalPipelineExecutor(
+                    pipeline=[], tasks=tasks, workers=workers, logging_dir=log_dir
+                )
                 executor.run()
 
                 for file in file_list:

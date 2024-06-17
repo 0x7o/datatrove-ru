@@ -26,7 +26,9 @@ class PipelineStep(ABC):
             *args:
             **kwargs:
         """
-        required_dependencies = chain.from_iterable(getattr(t, "_requires_dependencies", []) for t in cls.mro())
+        required_dependencies = chain.from_iterable(
+            getattr(t, "_requires_dependencies", []) for t in cls.mro()
+        )
         if required_dependencies:
             check_required_dependencies(cls.__name__, required_dependencies)
         return super().__new__(cls)
@@ -85,7 +87,9 @@ class PipelineStep(ABC):
         return f"{self.type}: {self.name}"
 
     @abstractmethod
-    def run(self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """
         Main entrypoint for any pipeline step. `data` is a generator of `Document`, and this method should
         yield `Document` (either add new documents if it is reading them, modify their content or metadata,
@@ -102,7 +106,9 @@ class PipelineStep(ABC):
         if data:
             yield from data
 
-    def __call__(self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def __call__(
+        self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """
             Shorthand way of calling the `run` method.
             block = Block()

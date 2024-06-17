@@ -23,7 +23,9 @@ class SymbolLinesFormatter(BaseFormatter):
         formatted = []
         in_removed_span = False
         for line in text.splitlines():
-            chars_line = line.strip() != "" and all(c in PUNCTUATION_SET or c == " " for c in line)
+            chars_line = line.strip() != "" and all(
+                c in PUNCTUATION_SET or c == " " for c in line
+            )
             if chars_line and not in_removed_span:
                 if self.replace_char:
                     formatted.append(self.replace_char)

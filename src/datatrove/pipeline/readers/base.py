@@ -62,10 +62,13 @@ class BaseReader(PipelineStep):
             "text": data.pop(self.text_key, ""),
             "id": data.pop(self.id_key, f"{path}/{id_in_file}"),
             "media": data.pop("media", []),
-            "metadata": data.pop("metadata", {}) | data,  # remaining data goes into metadata
+            "metadata": data.pop("metadata", {})
+            | data,  # remaining data goes into metadata
         }
 
-    def get_document_from_dict(self, data: dict, source_file: str, id_in_file: int | str):
+    def get_document_from_dict(
+        self, data: dict, source_file: str, id_in_file: int | str
+    ):
         """
         Applies the adapter to each sample, instantiates a Document object and adds `default_metadata`.
         Args:
@@ -91,7 +94,9 @@ class BaseReader(PipelineStep):
         return document
 
     @abstractmethod
-    def run(self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """
         To be overridden
         """
@@ -159,7 +164,9 @@ class BaseDiskReader(BaseReader):
     def get_document_from_dict(self, data: dict, source_file: str, id_in_file: int):
         document = super().get_document_from_dict(data, source_file, id_in_file)
         if document:
-            document.metadata.setdefault("file_path", self.data_folder.resolve_paths(source_file))
+            document.metadata.setdefault(
+                "file_path", self.data_folder.resolve_paths(source_file)
+            )
         return document
 
     @abstractmethod
@@ -193,7 +200,12 @@ class BaseDiskReader(BaseReader):
                 unit="doc",
                 disable=not self.doc_progress,
             ) as doc_pbar,
-            tqdm(total=len(shard), desc="File progress", unit="file", disable=not self.file_progress) as file_pbar,
+            tqdm(
+                total=len(shard),
+                desc="File progress",
+                unit="file",
+                disable=not self.file_progress,
+            ) as file_pbar,
         ):
             for i, filepath in enumerate(shard):
                 self.stat_update("input_files")
@@ -213,7 +225,9 @@ class BaseDiskReader(BaseReader):
                 if self.limit != -1 and li >= self.limit:
                     break
 
-    def run(self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """
         Will get this rank's shard and sequentially read each file in the shard, yielding Document.
         Args:

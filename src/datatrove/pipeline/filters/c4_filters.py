@@ -84,7 +84,11 @@ class C4QualityFilter(BaseFilter):
         self.tokenizer = load_word_tokenizer(language)
 
     def filter(self, doc: Document) -> bool | tuple[bool, str]:
-        lines = doc.text.splitlines() if self.split_paragraph else self.tokenizer.sent_tokenize(doc.text)
+        lines = (
+            doc.text.splitlines()
+            if self.split_paragraph
+            else self.tokenizer.sent_tokenize(doc.text)
+        )
 
         num_sentences = 0
         kept_lines = []
@@ -94,14 +98,18 @@ class C4QualityFilter(BaseFilter):
             words = line.split()
             self.stat_update("line-total")
             # check line has too long word
-            if self.max_word_length != -1 and any(len(word) > self.max_word_length for word in words):
+            if self.max_word_length != -1 and any(
+                len(word) > self.max_word_length for word in words
+            ):
                 self.stat_update("line-filter-too_long_word")
                 continue
             # remove citation
             if self.remove_citations:
                 line = CITATION_REGEX.sub("", line)
             # end punctuation
-            if self.filter_no_terminal_punct and (not line.endswith(END_PUNCTUATION) or line.endswith(ELLIPSIS)):
+            if self.filter_no_terminal_punct and (
+                not line.endswith(END_PUNCTUATION) or line.endswith(ELLIPSIS)
+            ):
                 self.stat_update("line-filter-no_terminal_punc")
                 continue
             # min words per line
@@ -123,7 +131,9 @@ class C4QualityFilter(BaseFilter):
             if self.filter_policy and any(p in line_l for p in POLICY_SUBSTRINGS):
                 self.stat_update("line-filter-policy")
                 continue
-            num_sentences += len(self.tokenizer.sent_tokenize(line)) if self.split_paragraph else 1
+            num_sentences += (
+                len(self.tokenizer.sent_tokenize(line)) if self.split_paragraph else 1
+            )
             kept_lines.append(line)
             self.stat_update("line-kept")
         if num_sentences < self.min_num_sentences:
@@ -155,7 +165,8 @@ class C4ParagraphFilter(BaseFilter):
         # (lines >= `min_paragraph_len` chars).
         if (
             len(lines) < self.min_paragraphs
-            or min(heapq.nlargest(3, [len(line) for line in lines])) < self.min_paragraph_len
+            or min(heapq.nlargest(3, [len(line) for line in lines]))
+            < self.min_paragraph_len
         ):
             return False
         return True
@@ -270,9 +281,13 @@ class C4BadWordsFilter(BaseFilter):
             return True
         badwords_found = badwords_regex.search(doc.text.lower())
         if badwords_found is not None:
-            self.stat_update("documents_with_badwords", f"documents_with_badwords_{lang}")
+            self.stat_update(
+                "documents_with_badwords", f"documents_with_badwords_{lang}"
+            )
             if self.keep_fraction > 0.0 and self.uniform() < self.keep_fraction:
-                self.stat_update("document_kept_with_badwords", f"document_kept_with_badwords_{lang}")
+                self.stat_update(
+                    "document_kept_with_badwords", f"document_kept_with_badwords_{lang}"
+                )
                 return True
             self.stat_update(f"document_removed_with_badwords_{lang}")
             return False, "document_removed_with_badwords"

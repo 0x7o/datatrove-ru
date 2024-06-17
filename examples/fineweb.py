@@ -4,7 +4,11 @@ FineWeb dataset (https://huggingface.co/datasets/HuggingFaceFW/fineweb)
 """
 
 from datatrove.executor.slurm import SlurmPipelineExecutor
-from datatrove.pipeline.dedup import MinhashDedupCluster, MinhashDedupFilter, MinhashDedupSignature
+from datatrove.pipeline.dedup import (
+    MinhashDedupCluster,
+    MinhashDedupFilter,
+    MinhashDedupSignature,
+)
 from datatrove.pipeline.dedup.minhash import MinhashConfig, MinhashDedupBuckets
 from datatrove.pipeline.extractors import Trafilatura
 from datatrove.pipeline.filters import (
@@ -37,7 +41,11 @@ main_processing_executor = SlurmPipelineExecutor(
             glob_pattern="*/warc/*",  # we want the warc files
             default_metadata={"dump": DUMP_TO_PROCESS},
         ),
-        URLFilter(exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/1_url/{DUMP_TO_PROCESS}")),
+        URLFilter(
+            exclusion_writer=JsonlWriter(
+                f"{FILTERING_OUTPUT_PATH}/removed/1_url/{DUMP_TO_PROCESS}"
+            )
+        ),
         Trafilatura(favour_precision=True),
         LanguageFilter(
             exclusion_writer=JsonlWriter(
@@ -47,17 +55,25 @@ main_processing_executor = SlurmPipelineExecutor(
             )
         ),
         GopherRepetitionFilter(
-            exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/3_gopher_rep/{DUMP_TO_PROCESS}")
+            exclusion_writer=JsonlWriter(
+                f"{FILTERING_OUTPUT_PATH}/removed/3_gopher_rep/{DUMP_TO_PROCESS}"
+            )
         ),
         GopherQualityFilter(
-            exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/4_gopher_qual/{DUMP_TO_PROCESS}")
+            exclusion_writer=JsonlWriter(
+                f"{FILTERING_OUTPUT_PATH}/removed/4_gopher_qual/{DUMP_TO_PROCESS}"
+            )
         ),
         C4QualityFilter(
             filter_no_terminal_punct=False,
-            exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/5_c4/{DUMP_TO_PROCESS}"),
+            exclusion_writer=JsonlWriter(
+                f"{FILTERING_OUTPUT_PATH}/removed/5_c4/{DUMP_TO_PROCESS}"
+            ),
         ),
         FineWebQualityFilter(
-            exclusion_writer=JsonlWriter(f"{FILTERING_OUTPUT_PATH}/removed/6_fineweb_qual/{DUMP_TO_PROCESS}")
+            exclusion_writer=JsonlWriter(
+                f"{FILTERING_OUTPUT_PATH}/removed/6_fineweb_qual/{DUMP_TO_PROCESS}"
+            )
         ),
         JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{DUMP_TO_PROCESS}"),
     ],
@@ -101,7 +117,8 @@ stage1 = SlurmPipelineExecutor(
     pipeline=[
         INPUT_READER,
         MinhashDedupSignature(
-            output_folder=f"{S3_MINHASH_BASE_PATH}/{DUMP_TO_PROCESS}/signatures", config=minhash_config
+            output_folder=f"{S3_MINHASH_BASE_PATH}/{DUMP_TO_PROCESS}/signatures",
+            config=minhash_config,
         ),
     ],
     tasks=TOTAL_TASKS,
@@ -122,7 +139,8 @@ stage2 = SlurmPipelineExecutor(
             config=MinhashConfig(use_64bit_hashes=True),
         ),
     ],
-    tasks=minhash_config.num_buckets * 50,  # the code supports parallelizing each bucket. here we run 50
+    tasks=minhash_config.num_buckets
+    * 50,  # the code supports parallelizing each bucket. here we run 50
     # workers per bucket
     randomize_start_duration=180,
     logging_dir=f"{S3_LOGS_FOLDER}/buckets",
@@ -159,7 +177,9 @@ stage4 = SlurmPipelineExecutor(
         INPUT_READER,
         TokensCounter(),  # you can remove this one, it's just a nice way to know how many tokens we have
         # before and after dedup
-        MinhashDedupFilter(input_folder=f"{S3_MINHASH_BASE_PATH}/{DUMP_TO_PROCESS}/remove_ids"),
+        MinhashDedupFilter(
+            input_folder=f"{S3_MINHASH_BASE_PATH}/{DUMP_TO_PROCESS}/remove_ids"
+        ),
         # run the PII removal
         PIIFormatter(),
         JsonlWriter(f"{S3_MINHASH_BASE_PATH}/{DUMP_TO_PROCESS}/deduped_output"),

@@ -49,10 +49,17 @@ class DocumentTokenizerContextShuffler(PipelineStep):
         Returns:
 
         """
-        doc_ids = np.concatenate([np.ones(len(doc_ends), dtype=int) * i for i, doc_ends in enumerate(all_doc_ends)])
+        doc_ids = np.concatenate(
+            [
+                np.ones(len(doc_ends), dtype=int) * i
+                for i, doc_ends in enumerate(all_doc_ends)
+            ]
+        )
         return self.rand.permutation(doc_ids)
 
-    def run(self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1) -> DocumentsPipeline:
+    def run(
+        self, data: DocumentsPipeline = None, rank: int = 0, world_size: int = 1
+    ) -> DocumentsPipeline:
         """
 
         Args:
@@ -64,9 +71,13 @@ class DocumentTokenizerContextShuffler(PipelineStep):
 
         """
         datafiles = self.input_folder.get_shard(rank, world_size, glob_pattern="*.ds")
-        datafiles_index = self.input_folder.get_shard(rank, world_size, glob_pattern="*.ds.index")
+        datafiles_index = self.input_folder.get_shard(
+            rank, world_size, glob_pattern="*.ds.index"
+        )
         for datafile, index in zip(datafiles, datafiles_index):
-            logger.info(f"Context shuffling {datafile.path} with a {self.window_size} token window")
+            logger.info(
+                f"Context shuffling {datafile.path} with a {self.window_size} token window"
+            )
             total_len = load_doc_ends(index)[-1]
             nr_windows = total_len // self.window_size
             ordering = self.rand.permutation(np.arange(0, nr_windows, dtype=int))

@@ -71,8 +71,12 @@ class ParquetReader(BaseDiskReader):
         with self.data_folder.open(filepath, "rb") as f:
             with pq.ParquetFile(f) as pqf:
                 li = 0
-                columns = [self.text_key, self.id_key] if not self.read_metadata else None
-                for batch in pqf.iter_batches(batch_size=self.batch_size, columns=columns):
+                columns = (
+                    [self.text_key, self.id_key] if not self.read_metadata else None
+                )
+                for batch in pqf.iter_batches(
+                    batch_size=self.batch_size, columns=columns
+                ):
                     documents = []
                     with self.track_time("batch"):
                         for line in batch.to_pylist():
