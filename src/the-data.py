@@ -53,6 +53,9 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
             if not w.startswith("crawl-data"):
                 continue
             url = f"https://data.commoncrawl.org/{w}"
+            if os.path.exists(f"cc/{w.split('/')[-1]}"):
+                print(f"Skipping {i + files_downloaded} {url}")
+                continue
             print(f"Downloading {i + files_downloaded} {url}")
             r = requests.get(url)
             with open(f"cc/{w.split('/')[-1]}", "wb") as f:
