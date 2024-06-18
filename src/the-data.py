@@ -40,7 +40,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
     print(f"Downloading WARC for {dump_to_process}")
     warc = requests.get(warc_url)
     warc = gzip.decompress(warc.content).decode("utf-8").split("\n")
-    n = 50
+    n = 15
 
     if not os.path.exists("cc"):
         os.makedirs("cc")
