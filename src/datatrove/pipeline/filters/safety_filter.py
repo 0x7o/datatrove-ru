@@ -12,7 +12,7 @@ class SafetyFilter(BaseFilter):
 
         super().__init__(exclusion_writer)
         self.pipe = pipeline("text-classification", model=model_name_or_path)
-        self.bad = "3 4 5 6 7 8 9 14".split(" ")
+        self.bad = "2 3 4 5 6 7 8 9 14".split(" ")
 
     def filter(self, doc: Document) -> bool:
         """Args:

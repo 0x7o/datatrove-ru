@@ -40,7 +40,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
     print(f"Downloading WARC for {dump_to_process}")
     warc = requests.get(warc_url)
     warc = gzip.decompress(warc.content).decode("utf-8").split("\n")
-    n = 5
+    n = 50
 
     if not os.path.exists("cc"):
         os.makedirs("cc")
@@ -77,6 +77,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
             Trafilatura(timeout=5),
             LanguageFilter(
                 languages=(Languages.russian,),
+                language_threshold=0.75,
                 exclusion_writer=JsonlWriter(
                     f"{FILTERING_OUTPUT_PATH}/removed/2_non_russian",
                     output_filename="${language}/"
@@ -114,7 +115,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
                 exclusion_writer=JsonlWriter(
                     f"{FILTERING_OUTPUT_PATH}/removed/7_safety_filter/{dump_to_process}"
                 ),
-                model_name_or_path="0x7o/rubert-tiny-sensitive-topics",
+                model_name_or_path="apanc/russian-sensitive-topics",
             ),
             JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{dump_to_process}"),
         ],
