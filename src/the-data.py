@@ -35,12 +35,12 @@ import nltk
 
 
 def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: int):
-    FILTERING_OUTPUT_PATH = f"{main_output_path}/base_processing_{host_id}"
+    FILTERING_OUTPUT_PATH = f"{main_output_path}/base_{host_id}"
     warc_url = f"https://data.commoncrawl.org/crawl-data/{dump_to_process}/warc.paths.gz"
     print(f"Downloading WARC for {dump_to_process}")
     warc = requests.get(warc_url)
     warc = gzip.decompress(warc.content).decode("utf-8").split("\n")
-    n = 15
+    n = 60
 
     if not os.path.exists("cc"):
         os.makedirs("cc")
@@ -123,7 +123,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
             ),
             JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{dump_to_process}"),
         ],
-        tasks=64,
+        tasks=128,
         workers=128,
         logging_dir=f"./logs/base_processing/{dump_to_process}",
         randomize_start_duration=180,  # don't hit the bucket all at once with the list requests
