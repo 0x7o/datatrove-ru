@@ -55,6 +55,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
             url = f"https://data.commoncrawl.org/{w}"
             if os.path.exists(f"cc/{w.split('/')[-1]}"):
                 print(f"Skipping {i + files_downloaded} {url}")
+                files_downloaded += 1
                 continue
             print(f"Downloading {i + files_downloaded} {url}")
             r = requests.get(url)
@@ -222,7 +223,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
     os.system(
         f"gsutil -m cp -r {S3_MINHASH_BASE_PATH}/{dump_to_process}/deduped_output {main_output_path}/{dump_to_process}/result_{host_id}")
     os.system(f"gsutil -m rm -r {S3_MINHASH_BASE_PATH}")
-    os.system(f"rm -rf {LOCAL_LOGS_FOLDER}")
+    os.system(f"rm -rf {LOCAL_LOGS_FOLDER} ./logs")
 
 
 if __name__ == "__main__":
