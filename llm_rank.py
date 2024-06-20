@@ -37,6 +37,8 @@ After examining the extract:
         })
     ).json()["choices"][0]["message"]["content"]
     match = re.search(r'Educational score:\s*(\d+)', r)
+    if not match:
+        return 0
     return int(match.group(1))
 
 
