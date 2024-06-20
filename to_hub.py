@@ -2,7 +2,6 @@ from datasets import Dataset
 import gcsfs
 import json
 
-file = "CC-MAIN-2024-22_result_1_00003.jsonl"
 fs = gcsfs.GCSFileSystem(project='utility-zenith-421002')
 files = fs.ls('ae-the-data/CC-MAIN-2024-22/result_1')
 
