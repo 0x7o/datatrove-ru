@@ -9,10 +9,10 @@ files = fs.ls('ae-the-data/CC-MAIN-2024-22/result_1')
 dataset = {"text": [], "url": [], "date": []}
 
 for file in files:
-    with fs.open(file, "r", encoding="utf-8") as f:
+    with fs.open(file, "rb") as f:
         with gzip.GzipFile(fileobj=f) as fr:
             for line in fr:
-                data = json.loads(line)
+                data = json.loads(line.decode('utf-8'))
                 dataset["text"].append(data["text"])
                 dataset["url"].append(data["metadata"]["url"])
                 dataset["date"].append(data["metadata"]["date"])
