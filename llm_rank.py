@@ -48,7 +48,7 @@ i = 0
 for item in tqdm(dataset["train"]):
     text = item["text"]
     finish = False
-    time = 0
+    t = 0
     while True:
         try:
             score = get_score(text)
@@ -59,8 +59,9 @@ for item in tqdm(dataset["train"]):
                 finish = True
             break
         except Exception as e:
-            print(f"Error: {e}, sleeping {time} s.")
-            time += 5
+            t += 5
+            print(f"Error: {e}, sleeping {t} s.")
+            time.sleep(t)
             continue
     if finish:
         break
