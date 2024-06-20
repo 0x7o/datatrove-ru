@@ -8,7 +8,7 @@ files = fs.ls('ae-the-data/CC-MAIN-2024-22/result_1')
 dataset = {"text": [], "url": [], "date": []}
 
 for file in files:
-    with fs.open(f"ae-the-data/CC-MAIN-2024-22/result_1/{file}", "r", encoding="utf-8") as f:
+    with fs.open(file, "r", encoding="utf-8") as f:
         for line in f:
             data = json.loads(line)
             dataset["text"].append(data["text"])
