@@ -1,6 +1,7 @@
 from datasets import load_dataset, Dataset
 from tqdm import tqdm
 import requests
+import time
 import json
 import os
 import re
@@ -46,16 +47,23 @@ i = 0
 
 for item in tqdm(dataset["train"]):
     text = item["text"]
-    try:
-        score = get_score(text)
-        data["text"].append(text)
-        data["score"].append(score)
-        i += 1
-        if i >= 4000:
+    finish = False
+    time = 0
+    while True:
+        try:
+            score = get_score(text)
+            data["text"].append(text)
+            data["score"].append(score)
+            i += 1
+            if i >= 4000:
+                finish = True
             break
-    except Exception as e:
-        print(f"Error: {e}")
-        continue
+        except Exception as e:
+            print(f"Error: {e}, sleeping {time} s.")
+            time += 5
+            continue
+    if finish:
+        break
 
 dataset = Dataset.from_dict(data)
 dataset.push_to_hub("0x7o/ru_rank")
