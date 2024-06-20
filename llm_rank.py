@@ -64,6 +64,9 @@ for item in tqdm(dataset["train"]):
             t += 5
             print(f"Error: {e}, sleeping {t} s.")
             time.sleep(t)
+            if t >= 40:
+                finish = True
+                break
             continue
     if finish:
         break
