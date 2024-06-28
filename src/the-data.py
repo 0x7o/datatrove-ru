@@ -65,9 +65,6 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
     FILTERING_OUTPUT_PATH = f"{main_output_path}/base_{host_id}"
     warc_paths = download_warc_paths(dump_to_process)
 
-    if not os.path.exists("cc"):
-        os.makedirs("cc")
-
     total_files = len(warc_paths)
     batch_size = 48
     host_batch_size = batch_size * total_hosts
@@ -76,6 +73,8 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
 
     for batch_start in range(host_id * batch_size, total_files, host_batch_size):
         batch_end = batch_start + batch_size
+        if not os.path.exists("cc"):
+            os.makedirs("cc")
         print(f"Processing batch {batch_start // batch_size + 1} on host {host_id}")
         process_warc_batch(warc_paths, batch_start, batch_end)
 
