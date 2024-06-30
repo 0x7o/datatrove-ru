@@ -50,6 +50,7 @@ class Trafilatura(BaseExtractor):
             text,
             favor_precision=self.favour_precision,
             include_comments=False,
+            include_images=True,
             deduplicate=self.deduplicate,
             **self.kwargs,
         )
