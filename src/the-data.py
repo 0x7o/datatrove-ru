@@ -3,12 +3,6 @@ import os
 from datatrove.utils.typeshelper import Languages
 
 from datatrove.executor.local import LocalPipelineExecutor
-from datatrove.pipeline.dedup import (
-    MinhashDedupCluster,
-    MinhashDedupFilter,
-    MinhashDedupSignature,
-)
-from datatrove.pipeline.dedup.minhash import MinhashConfig, MinhashDedupBuckets
 from datatrove.pipeline.extractors import Trafilatura
 from datatrove.pipeline.filters import (
     C4QualityFilter,
@@ -19,9 +13,7 @@ from datatrove.pipeline.filters import (
     LanguageFilter,
     URLFilter,
 )
-from datatrove.pipeline.formatters import PIIFormatter
-from datatrove.pipeline.readers import JsonlReader, WarcReader
-from datatrove.pipeline.tokens import TokensCounter
+from datatrove.pipeline.readers import WarcReader
 from datatrove.pipeline.writers.jsonl import JsonlWriter
 
 from argparse import ArgumentParser
@@ -29,6 +21,7 @@ from typing import List
 import requests
 import gzip
 import nltk
+import gc
 
 
 def download_warc_paths(dump_to_process: str) -> List[str]:
@@ -147,97 +140,14 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
             we then applied minhash deduplication to each individual dump,
         """
 
-        # you can also change ngrams or the number of buckets and their size here
-        minhash_config = MinhashConfig(
-            num_buckets=14,
-            hashes_per_bucket=8,
-            n_grams=5,
-        )
-
-        S3_MINHASH_BASE_PATH = f"{main_output_path}/minhash_{host_id}"
-
-        S3_LOGS_FOLDER = "./logs/minhash"
-        LOCAL_LOGS_FOLDER = "./logs/minhash"
-
-        TOTAL_TASKS = 64
-
-        # this is the original data that we want to deduplicate
-        INPUT_READER = JsonlReader(
-            f"{FILTERING_OUTPUT_PATH}/output/{dump_to_process}"
-        )  # this is the output from the first part
-
-        # stage 1 computes minhash signatures for each task (each task gets a set of files)
-        stage1 = LocalPipelineExecutor(
-            pipeline=[
-                INPUT_READER,
-                MinhashDedupSignature(
-                    output_folder=f"{S3_MINHASH_BASE_PATH}/{dump_to_process}/signatures",
-                    config=minhash_config,
-                    language=Languages.russian,
-                ),
-            ],
-            tasks=TOTAL_TASKS,
-            logging_dir=f"{S3_LOGS_FOLDER}/signatures",
-            randomize_start_duration=180,
-            depends=main_processing_executor,  # only start after the first one completes
-        )
-
-        stage2 = LocalPipelineExecutor(
-            pipeline=[
-                MinhashDedupBuckets(
-                    input_folder=f"{S3_MINHASH_BASE_PATH}/{dump_to_process}/signatures",
-                    output_folder=f"{S3_MINHASH_BASE_PATH}/{dump_to_process}/buckets",
-                ),
-            ],
-            tasks=minhash_config.num_buckets
-                  * 2,  # the code supports parallelizing each bucket. here we run 50
-            # workers per bucket
-            randomize_start_duration=180,
-            logging_dir=f"{S3_LOGS_FOLDER}/buckets",
-            depends=stage1,
-        )
-
-        stage3 = LocalPipelineExecutor(
-            pipeline=[
-                MinhashDedupCluster(
-                    input_folder=f"{S3_MINHASH_BASE_PATH}/{dump_to_process}/buckets",
-                    output_folder=f"{S3_MINHASH_BASE_PATH}/{dump_to_process}/remove_ids",
-                    config=minhash_config,
-                ),
-            ],
-            tasks=1,  # this step runs on a single task
-            logging_dir=f"{S3_LOGS_FOLDER}/clustering",
-            depends=stage2,
-        )
-
-        stage4 = LocalPipelineExecutor(
-            pipeline=[
-                INPUT_READER,
-                TokensCounter(tokenizer_name_or_path="aeonium/Aeonium-v1.1-Base-4B"),
-                # before and after dedup
-                MinhashDedupFilter(
-                    input_folder=f"{S3_MINHASH_BASE_PATH}/{dump_to_process}/remove_ids"
-                ),
-                # run the PII removal
-                PIIFormatter(),
-                JsonlWriter(f"{S3_MINHASH_BASE_PATH}/{dump_to_process}/deduped_output"),
-            ],
-            tasks=TOTAL_TASKS,
-            logging_dir=f"{S3_LOGS_FOLDER}/filtering",
-            depends=stage3,
-        )
-
-        # launch dedup pipelines
-        print(stage4.run())
-
         # remove all the files
         os.system(f"rm -rf cc")
-        os.system(f"gsutil -m rm -r {FILTERING_OUTPUT_PATH}")
         os.system(
-            f"gsutil -m cp -r {S3_MINHASH_BASE_PATH}/{dump_to_process}/deduped_output {main_output_path}/{dump_to_process}/result_{host_id}/{batch_num}")
-        os.system(f"gsutil -m rm -r {S3_MINHASH_BASE_PATH}")
-        os.system(f"rm -rf {LOCAL_LOGS_FOLDER} ./logs")
+            f"gsutil -m cp -r {FILTERING_OUTPUT_PATH}/output/{dump_to_process} {main_output_path}/{dump_to_process}/result_{host_id}/{batch_num}")
+        os.system(f"gsutil -m rm -r {FILTERING_OUTPUT_PATH}")
+        os.system(f"rm -rf ./logs")
 
+        gc.collect()
         batch_num += 1
 
 
