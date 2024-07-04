@@ -59,7 +59,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
     warc_paths = download_warc_paths(dump_to_process)
 
     total_files = len(warc_paths)
-    batch_size = 48
+    batch_size = 20
     host_batch_size = batch_size * total_hosts
 
     batch_num = 0
