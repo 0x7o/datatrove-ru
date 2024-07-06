@@ -1,5 +1,7 @@
 import os
 
+from datatrove.pipeline.formatters import PIIFormatter
+from datatrove.pipeline.tokens import TokensCounter
 from datatrove.utils.typeshelper import Languages
 
 from datatrove.executor.local import LocalPipelineExecutor
@@ -127,6 +129,8 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
                     ),
                     model_name_or_path="apanc/russian-sensitive-topics",
                 ),
+                TokensCounter(tokenizer_name_or_path="aeonium/Aeonium-v1.1-Chat-4B"),
+                PIIFormatter(),
                 JsonlWriter(f"{FILTERING_OUTPUT_PATH}/output/{dump_to_process}"),
             ],
             tasks=128,
