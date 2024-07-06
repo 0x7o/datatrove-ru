@@ -21,7 +21,7 @@ class SafetyFilter(BaseFilter):
         Returns:
             is_filter
         """
-        result = self.pipe(doc.text, padding=True, truncation=True, max_length=512)[0]
+        result = self.pipe(doc.text, padding=True, truncation=True, max_length=128)[0]
         label = result["label"].split("_")[-1]
         if label in self.bad and result["score"] > 0.8:
             return False
