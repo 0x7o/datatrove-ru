@@ -27,7 +27,9 @@ import gc
 
 
 def download_warc_paths(dump_to_process: str) -> List[str]:
-    warc_url = f"https://data.commoncrawl.org/crawl-data/{dump_to_process}/warc.paths.gz"
+    warc_url = (
+        f"https://data.commoncrawl.org/crawl-data/{dump_to_process}/warc.paths.gz"
+    )
     print(f"Downloading WARC paths for {dump_to_process}")
     response = requests.get(warc_url)
     return gzip.decompress(response.content).decode("utf-8").split("\n")
@@ -35,7 +37,7 @@ def download_warc_paths(dump_to_process: str) -> List[str]:
 
 def download_warc_file(w: str) -> None:
     url = f"https://data.commoncrawl.org/{w}"
-    file_name = w.split('/')[-1]
+    file_name = w.split("/")[-1]
     file_path = f"cc/{file_name}"
 
     if os.path.exists(file_path):
@@ -61,7 +63,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
     warc_paths = download_warc_paths(dump_to_process)
 
     total_files = len(warc_paths)
-    batch_size = 50
+    batch_size = 20
     host_batch_size = batch_size * total_hosts
 
     batch_num = 0
@@ -93,8 +95,8 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
                     exclusion_writer=JsonlWriter(
                         f"{FILTERING_OUTPUT_PATH}/removed/2_non_russian",
                         output_filename="${language}/"
-                                        + dump_to_process
-                                        + "/${rank}.jsonl.gz",
+                        + dump_to_process
+                        + "/${rank}.jsonl.gz",
                         # folder structure: language/dump/file
                     ),
                 ),
@@ -147,7 +149,8 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
         # remove all the files
         os.system(f"rm -rf cc")
         os.system(
-            f"gsutil -m cp -r {FILTERING_OUTPUT_PATH}/output/{dump_to_process} {main_output_path}/{dump_to_process}/result_{host_id}/{batch_num}")
+            f"gsutil -m cp -r {FILTERING_OUTPUT_PATH}/output/{dump_to_process} {main_output_path}/{dump_to_process}/result_{host_id}/{batch_num}"
+        )
         os.system(f"gsutil -m rm -r {FILTERING_OUTPUT_PATH}")
         os.system(f"rm -rf ./logs")
 
@@ -156,7 +159,7 @@ def run(dump_to_process: str, main_output_path: str, host_id: int, total_hosts: 
 
 
 if __name__ == "__main__":
-    nltk.download('punkt')
+    nltk.download("punkt")
     parser = ArgumentParser()
     parser.add_argument("--dump", type=str, required=True)
     parser.add_argument("--output", type=str, required=True)

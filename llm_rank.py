@@ -13,11 +13,14 @@ def get_score(text):
         headers={
             "Authorization": f"Bearer {os.environ.get('API_KEY')}",
         },
-        data=json.dumps({
-            "model": "meta-llama/llama-3-70b-instruct:nitro",
-            "temperature": 0.0,
-            "messages": [
-                {"role": "user", "content": f"""Below is an extract from a web page. Evaluate whether the page has a high educational value and could be useful in an educational setting for teaching from primary school to grade school levels using the additive 5-point scoring system described below. Points are accumulated based on the satisfaction of each criterion:
+        data=json.dumps(
+            {
+                "model": "meta-llama/llama-3-70b-instruct:nitro",
+                "temperature": 0.0,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": f"""Below is an extract from a web page. Evaluate whether the page has a high educational value and could be useful in an educational setting for teaching from primary school to grade school levels using the additive 5-point scoring system described below. Points are accumulated based on the satisfaction of each criterion:
 
 - Add 1 point if the extract provides some basic information relevant to educational topics, even if it includes some irrelevant or non-academic content like advertisements and promotional material.
 - Add another point if the extract addresses certain elements pertinent to education but does not align closely with educational standards. It might mix educational content with non-educational material, offering a superficial overview of potentially useful topics, or presenting information in a disorganized manner and incoherent writing style.
@@ -32,11 +35,13 @@ The extract: {text[:512]}.
 After examining the extract:
 
 - Briefly justify your total score, up to 100 words.
-- Conclude with the score using the format: "Educational score: <total points>"""}
-            ]
-        })
+- Conclude with the score using the format: "Educational score: <total points>""",
+                    }
+                ],
+            }
+        ),
     ).json()["choices"][0]["message"]["content"]
-    match = re.search(r'Educational score:\s*(\d+)', r)
+    match = re.search(r"Educational score:\s*(\d+)", r)
     if not match:
         return 0
     return int(match.group(1))
